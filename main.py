@@ -19,7 +19,7 @@ ADMIN_ID = 000000000
 
 dp = Dispatcher()
 
-# Foydalanuvchilar bazasi va boshlang'ich liderlar (Ballari va pullari mantiqiy moslashtirildi)
+# Foydalanuvchilar bazasi va boshlang'ich liderlar
 users_db = {
     "bot_1": {"score": 85, "money": 205000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 0, "referred_users": []},
     "bot_2": {"score": 72, "money": 164000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 0, "referred_users": []},
@@ -51,7 +51,6 @@ class AdminScoreStates(StatesGroup):
     waiting_for_score_amount = State()
 
 
-# --- KENGAYTIRILGAN VA HAR XIL SAVOLLAR BAZASI ---
 CATEGORIES_DB = {
     "logic": {
         "title": "🧠 Mantiqiy Savollar",
@@ -140,7 +139,7 @@ async def check_real_subscription(bot: Bot, user_id: int, user_name: str) -> boo
             await process_referral_reward(bot, user_id, user_name)
             return True
     except Exception:
-        return True
+        pass
     return False
 
 
@@ -216,12 +215,15 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
 
 @dp.callback_query(F.data == "check_joined")
 async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> None:
-    await callback.answer()
     user_id = callback.from_user.id
     user_name = callback.from_user.full_name
-    verified_users.add(user_id)
-    await process_referral_reward(callback.bot, user_id, user_name)
     
+    has_access = await check_real_subscription(callback.bot, user_id, user_name)
+    if not has_access:
+        await callback.answer("❌ Siz hali kanalimizga a'zo bo'lmadingiz yoki so'rov yubormadingiz!", show_alert=True)
+        return
+
+    await callback.answer()
     try:
         await callback.message.delete()
     except:
@@ -452,7 +454,6 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
     )
 
 
-# --- ADMIN PANEL ---
 @dp.message(Command("admin"))
 async def admin_panel_handler(message: Message) -> None:
     user_id = message.from_user.id
