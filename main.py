@@ -5,6 +5,7 @@ from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     CallbackQueryHandler,
+    ChatJoinRequestHandler,
     ContextTypes,
 )
 
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # --- SOZLAMALAR ---
 TOKEN = "8963661833:AAERa76qlzRiljTUXkqxFxeDEg6_MJKQ44k"
-CHANNEL_ID = -1004317372728  # Kanalning aniq ID raqami
+CHANNEL_ID = -1004317372728  # Kanalning ID raqami
 
 # --- BAZA BILAN ISHLASH (Eski ma'lumotlar saqlanadi) ---
 def init_db():
@@ -75,18 +76,17 @@ def update_subscription_status(user_id, status: int):
 
 # Kanalga a'zolikni tekshirish
 async def check_sub_channel(user_id, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    user = get_user(user_id)
+    if user and user[4] == 1:
+        return True
     try:
         member = await context.bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
         if member.status in [ChatMember.ADMINISTRATOR, ChatMember.CREATOR, ChatMember.MEMBER]:
             update_subscription_status(user_id, 1)
             return True
-        else:
-            update_subscription_status(user_id, 0)
-            return False
     except Exception as e:
         logger.error(f"Kanalga a'zolikni tekshirishda xatolik: {e}")
-        user = get_user(user_id)
-        return user and user[4] == 1
+    return False
 
 # --- START BUYRUG'I VA REFERAL TIZIMI ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -111,7 +111,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
             "📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling yoki so'rov yuboring:\n\n"
-            "👇 Tugmani bosing, so'ngra **'Obunani Tekshirish'** tugmasini bosing:",
+            "👇 Tugmani bosing, so'ngra **Obunani Tekshirish** tugmasini bosing:",
             reply_markup=reply_markup,
             parse_mode="Markdown"
         )
@@ -126,10 +126,45 @@ async def check_subscription_callback(update: Update, context: ContextTypes.DEFA
     is_subbed = await check_sub_channel(user_id, context)
 
     if is_subbed:
-        await query.message.edit_text("Rahmat! Obuna yoki so'rovingiz tasdiqlandi. 🎉")
+        await query.message.edit_text("Rahmat! Tasdiqlandi. 🎉")
         await show_main_menu_by_chat(query.message.chat_id, user_id, context)
     else:
         await query.answer("Siz hali kanalga a'zo bo'lmadingiz yoki so'rov yubormadingiz!", show_alert=True)
+
+# Yopiq kanalga so'rov (Join Request) tashlanganda avtomatik qabul qilish va bazani yangilash
+async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    request = update.chat_join_request
+    user_id = request.from_user.id
+    
+    try:
+        # Foydalanuvchini kanalga avtomatik tasdiqlash (agar xohlasangiz)
+        await request.approve()
+    except Exception as e:
+        logger.error(f"Join request approve xatoligi: {e}")
+
+    update_subscription_status(user_id, 1)
+    
+    # Foydalanuvchiga botga xush kelibsiz xabarini yuborish
+    try:
+        bot_username = (await context.bot.get_me()).username
+        user = get_user(user_id)
+        balance = user[1] if user else 0
+        refs = user[2] if user else 0
+        ref_link = f"https://t.me/{bot_username}?start={user_id}"
+
+        text = (
+            f"<b>🎉 So'rovingiz qabul qilindi va tasdiqlandi!</b>\n\n"
+            f"💡 Sizning balansingiz: <b>{balance}</b> ball\n"
+            f"👥 Taklif qilgan do'stlaringiz: <b>{refs}</b> ta\n\n"
+            f"🔗 <b>Sizning referal havolangiz:</b>\n<code>{ref_link}</code>"
+        )
+        keyboard = [
+            [InlineKeyboardButton("👥 Referallarim", callback_data="my_refs")],
+            [InlineKeyboardButton("🎮 Viktorinani boshlash", callback_data="start_quiz")]
+        ]
+        await context.bot.send_message(chat_id=user_id, text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")
+    except Exception as e:
+        logger.error(f"Xabar yuborishda xatolik: {e}")
 
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -226,6 +261,9 @@ def main():
     app.add_handler(CallbackQueryHandler(check_subscription_callback, pattern="^check_subscription$"))
     app.add_handler(CallbackQueryHandler(my_refs_callback, pattern="^my_refs$"))
     app.add_handler(CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"))
+    
+    # Yopiq kanalga tashlangan so'rovlarni ushlash uchun handler qo'shildi
+    app.add_handler(ChatJoinRequestHandler(handle_join_request))
 
     print("Bot ishga tushdi...")
     app.run_polling()
