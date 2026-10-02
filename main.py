@@ -32,7 +32,6 @@ users_db = {
     "bot_10": {"score": 28, "money": 56000, "withdrawn": 0, "name": "Shaxzodbek", "referrals_count": 0, "referred_users": []}
 }
 
-verified_users = set()
 pending_referrals = {}
 
 
@@ -120,31 +119,14 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
         del pending_referrals[user_id]
 
 
-@dp.chat_join_request()
-async def handle_join_request(request: ChatJoinRequest) -> None:
-    user_id = request.from_user.id
-    user_name = request.from_user.full_name
-    verified_users.add(user_id)
-    await process_referral_reward(request.bot, user_id, user_name)
-
-
-async def check_real_subscription(bot: Bot, user_id: int, user_name: str) -> bool:
-    if user_id in verified_users:
-        return True
+async def check_user_subscription(bot: Bot, user_id: int) -> bool:
+    """Har safar kanal a'zoligini real vaqt rejimida tekshiradi"""
     try:
-        chat = await bot.get_chat(chat_id=CHANNEL_USERNAME)
-        # Agar kanalga join request (so'rovnoma) yoqilgan bo'lsa va foydalanuvchi so'rov yuborgan bo'lsa yoki a'zo bo'lsa
         member = await bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
         if member.status in ["member", "administrator", "creator", "restricted"]:
-            verified_users.add(user_id)
-            await process_referral_reward(bot, user_id, user_name)
             return True
     except Exception:
-        # Agar kanal ochiq bo'lsa yoki tekshirishda xatolik chiqsa, to'g'ridan-to'g'ri o'tkazib yuborish uchun True qaytarish mumkin
-        # Lekin agar kanalga a'zolik shartligi aniq bo'lsa, quyidagicha ishlaydi:
         pass
-    
-    # Agar kanal ochiq bo'lib, get_chat_member xato bermasa yoki so'rovnoma holati ishlasa
     return False
 
 
@@ -195,27 +177,22 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         except:
             pass
 
-    # Agar kanalga obuna tekshiruvi shart bo'lsa tekshiradi
-    # (Agar kanalga join request yoki oddiy obuna qo'yilmagan bo'lsa, bu tekshiruvni olib tashlash mumkin)
-    # Hozirgi holatda faqat a'zo bo'lmaganlargagina obuna oynasini chiqaradi:
-    try:
-        member = await message.bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
-        is_member = member.status in ["member", "administrator", "creator", "restricted"]
-    except:
-        is_member = True  # Agar bot kanalni tekshira olmasa yoki kanal ochiq bo'lsa, to'g'ridan-to'g'ri o'tkazadi
-
-    if not is_member and user_id not in verified_users:
+    # Har safar tekshiriladi: Agar kanalda bo'lmasa, ruxsat berilmaydi
+    is_member = await check_user_subscription(message.bot, user_id)
+    if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         text = (
             f"✨ **Salom, {html.bold(user_name)}!**\n\n"
-            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling yoki so'rov yuboring:\n\n"
-            f"👇 Tugmani bosing, so'ngra **'Obunani Tekshirish'** tugmasini bosing:"
+            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n"
+            f"👇 Kanalga o'ting, a'zo bo'ling va **'Obunani Tekshirish'** tugmasini bosing:"
         )
         await message.answer(text, reply_markup=keyboard)
         return
+
+    await process_referral_reward(message.bot, user_id, user_name)
 
     text = (
         f"✨ **Salom, {html.bold(user_name)}!**\n\n"
@@ -231,20 +208,14 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
     user_id = callback.from_user.id
     user_name = callback.from_user.full_name
     
-    try:
-        member = await callback.bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
-        is_member = member.status in ["member", "administrator", "creator", "restricted"]
-    except:
-        is_member = True
-
+    is_member = await check_user_subscription(callback.bot, user_id)
     if not is_member:
-        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz yoki so'rov yubormadingiz!", show_alert=True)
+        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz! Iltimos, avval kanalga obuna bo'ling.", show_alert=True)
         return
 
-    verified_users.add(user_id)
-    await process_referral_reward(callback.bot, user_id, user_name)
-
     await callback.answer("✅ Obuna tasdiqlandi!")
+    await process_referral_reward(callback.bot, user_id, user_name)
+    
     try:
         await callback.message.delete()
     except:
@@ -252,8 +223,31 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
     await command_start_handler(callback.message, state)
 
 
+# Har bir menyu yoki o'yin boshlanishidan oldin ham kanal a'zoligi qat'iy tekshiriladi
+async def verify_access_middleware(callback: CallbackQuery) -> bool:
+    user_id = callback.from_user.id
+    is_member = await check_user_subscription(callback.bot, user_id)
+    if not is_member:
+        await callback.answer("❌ Botdan foydalanish uchun avval kanalimizga a'zo bo'lishingiz kerak!", show_alert=True)
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
+        ])
+        try:
+            await callback.message.edit_text(
+                "📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n👇 Tugmani bosing:",
+                reply_markup=keyboard
+            )
+        except:
+            pass
+        return False
+    return True
+
+
 @dp.callback_query(F.data == "select_category")
 async def select_category_handler(callback: CallbackQuery) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     user_id = callback.from_user.id
     
@@ -272,6 +266,8 @@ async def select_category_handler(callback: CallbackQuery) -> None:
 
 @dp.callback_query(F.data.startswith("cat_"))
 async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     user_id = callback.from_user.id
     cat_key = callback.data.split("_")[1]
@@ -289,6 +285,8 @@ async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> No
 
 @dp.callback_query(F.data == "daily_bonus")
 async def daily_bonus_handler(callback: CallbackQuery) -> None:
+    if not await verify_access_middleware(callback):
+        return
     user_id = callback.from_user.id
     if user_id in users_db and users_db[user_id].get("in_game", False):
         await callback.answer("⚠️ O'yin paytida bonus olib bo'lmaydi!", show_alert=True)
@@ -322,6 +320,8 @@ async def daily_bonus_handler(callback: CallbackQuery) -> None:
 
 @dp.callback_query(F.data == "top_board")
 async def top_board_handler(callback: CallbackQuery) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     sorted_users = sorted(users_db.items(), key=lambda x: (x[1].get("money", 0) + x[1].get("withdrawn", 0)), reverse=True)[:10]
     
@@ -335,12 +335,14 @@ async def top_board_handler(callback: CallbackQuery) -> None:
         medal = "🥇" if idx == 1 else ("🥈" if idx == 2 else ("🥉" if idx == 3 else f"{idx}."))
         text += f"{medal} **{name}**\n   🏆 {score} ball | 💰 Jami: {total_earned:,} so'm | 💸 Yechgan: {withdrawn:,} so'm\n\n"
         
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
 
 
 @dp.callback_query(F.data == "referral_info")
 async def referral_info_handler(callback: CallbackQuery) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     user_id = callback.from_user.id
     bot_username = "BilagonQuizBot"
@@ -371,6 +373,8 @@ async def referral_info_handler(callback: CallbackQuery) -> None:
 
 @dp.callback_query(F.data == "my_balance")
 async def show_balance(callback: CallbackQuery) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     user_id = callback.from_user.id
     if user_id not in users_db:
@@ -404,6 +408,8 @@ async def show_balance(callback: CallbackQuery) -> None:
 
 @dp.callback_query(F.data == "withdraw_money")
 async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     user_id = callback.from_user.id
     money = users_db.get(user_id, {}).get("money", 0)
@@ -430,6 +436,9 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
 
 @dp.message(WithdrawStates.waiting_for_name)
 async def process_withdraw_name(message: Message, state: FSMContext) -> None:
+    if not await check_user_subscription(message.bot, message.from_user.id):
+        await message.answer("❌ Avval kanalimizga a'zo bo'ling!")
+        return
     full_name = message.text.strip()
     await state.update_data(user_fullname=full_name)
     
@@ -439,6 +448,9 @@ async def process_withdraw_name(message: Message, state: FSMContext) -> None:
 
 @dp.message(WithdrawStates.waiting_for_card)
 async def process_withdraw_card(message: Message, state: FSMContext) -> None:
+    if not await check_user_subscription(message.bot, message.from_user.id):
+        await message.answer("❌ Avval kanalimizga a'zo bo'ling!")
+        return
     card_info = message.text.strip()
     data = await state.get_data()
     fullname = data.get("user_fullname")
@@ -608,6 +620,8 @@ async def process_broadcast(message: Message, state: FSMContext) -> None:
 
 @dp.callback_query(F.data == "back_to_menu")
 async def back_to_menu(callback: CallbackQuery, state: FSMContext) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     user_id = callback.from_user.id
     
@@ -626,6 +640,8 @@ async def back_to_menu(callback: CallbackQuery, state: FSMContext) -> None:
 
 @dp.callback_query(F.data == "rules")
 async def show_rules(callback: CallbackQuery) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     text = (
         "📜 <b>O ' Y I N   Q O I D A L A R I</b>\n"
@@ -656,7 +672,7 @@ async def start_quiz_session_processed(message: Message, user_id: int):
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔗 Referal Havolasini Olish", callback_data="referral_info")],
-            [InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]
+            [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]
         ])
         await message.edit_text(text, reply_markup=keyboard)
         return
@@ -747,6 +763,8 @@ async def send_next_question(message: Message, user_id: int):
 
 @dp.callback_query(F.data.startswith("ans_"))
 async def process_answer(callback: CallbackQuery) -> None:
+    if not await verify_access_middleware(callback):
+        return
     await callback.answer()
     user_id = callback.from_user.id
     if user_id not in users_db or "current_q_data" not in users_db[user_id]:
