@@ -33,7 +33,7 @@ users_db = {
 }
 
 pending_referrals = {}
-join_requests = set()  # So'rov yuborganlar bazasi
+approved_users = set()  # Tasdiqlangan yoki so'rov yuborgan foydalanuvchilar
 
 
 class WithdrawStates(StatesGroup):
@@ -123,20 +123,20 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
 @dp.chat_join_request()
 async def handle_join_request(request: ChatJoinRequest) -> None:
     user_id = request.from_user.id
-    join_requests.add(user_id)
+    approved_users.add(user_id)
     user_name = request.from_user.full_name
     await process_referral_reward(request.bot, user_id, user_name)
 
 
 async def check_user_subscription(bot: Bot, user_id: int) -> bool:
-    """Foydalanuvchi rostdan ham kanal a'zosi yoki so'rov yuborganligini qat'iy tekshiradi"""
-    # Agar kanalga so'rov tashlagan bo'lsa
-    if user_id in join_requests:
+    """Foydalanuvchi so'rov yuborgan yoki kanal a'zosi ekanligini aniqlaydi"""
+    if user_id in approved_users:
         return True
         
     try:
         member = await bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
         if member.status in ["member", "administrator", "creator", "restricted"]:
+            approved_users.add(user_id)
             return True
     except Exception:
         pass
@@ -193,7 +193,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         text = (
@@ -222,9 +222,10 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
     
     is_member = await check_user_subscription(callback.bot, user_id)
     if not is_member:
-        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz yoki so'rov yubormadingiz! Iltimos, avval obuna bo'ling.", show_alert=True)
+        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz yoki so'rov yubormadingiz! Iltimos, tugmani bosib obuna bo'ling.", show_alert=True)
         return
 
+    approved_users.add(user_id)
     await callback.answer("✅ Obuna tasdiqlandi!")
     await process_referral_reward(callback.bot, user_id, user_name)
     
@@ -241,7 +242,7 @@ async def verify_access_middleware(callback: CallbackQuery) -> bool:
     if not is_member:
         await callback.answer("❌ Botdan foydalanish uchun avval kanalimizga a'zo bo'lishingiz kerak!", show_alert=True)
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         try:
@@ -263,7 +264,7 @@ async def select_category_handler(callback: CallbackQuery) -> None:
     user_id = callback.from_user.id
     
     if user_id in users_db and users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠️ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
+        await callback.message.answer("⚠️️ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
         return
 
     keyboard_buttons = []
