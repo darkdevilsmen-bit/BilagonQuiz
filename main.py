@@ -33,7 +33,7 @@ users_db = {
 }
 
 pending_referrals = {}
-approved_users = set()  # Tasdiqlangan yoki so'rov yuborgan foydalanuvchilar
+approved_users = set()
 
 
 class WithdrawStates(StatesGroup):
@@ -129,7 +129,6 @@ async def handle_join_request(request: ChatJoinRequest) -> None:
 
 
 async def check_user_subscription(bot: Bot, user_id: int) -> bool:
-    """Foydalanuvchi so'rov yuborgan yoki kanal a'zosi ekanligini aniqlaydi"""
     if user_id in approved_users:
         return True
         
@@ -229,11 +228,19 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
     await callback.answer("✅ Obuna tasdiqlandi!")
     await process_referral_reward(callback.bot, user_id, user_name)
     
+    # Eski xabarni butunlay o'chiramiz va yangi menyu chiqaramiz
     try:
         await callback.message.delete()
     except:
         pass
-    await command_start_handler(callback.message, state)
+        
+    text = (
+        f"✨ **Salom, {html.bold(user_name)}!**\n\n"
+        f"🎯 **«Bilag'on Quiz»** botiga xush kelibsiz!\n\n"
+        f"🔥 **Combo Tizimi:** Ketma-ket to'g'ri topganingiz sari mukofot oshib boradi (2,000 so'mdan 5,000+ so'mgacha!) 🚀\n\n"
+        f"⬇️ Quyidagi menyudan kerakli bo'limni tanlang:"
+    )
+    await callback.message.answer(text, reply_markup=get_main_menu(user_id))
 
 
 async def verify_access_middleware(callback: CallbackQuery) -> bool:
@@ -264,7 +271,7 @@ async def select_category_handler(callback: CallbackQuery) -> None:
     user_id = callback.from_user.id
     
     if user_id in users_db and users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠️️ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
+        await callback.message.answer("⚠️ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
         return
 
     keyboard_buttons = []
@@ -379,7 +386,7 @@ async def referral_info_handler(callback: CallbackQuery) -> None:
         f"{list_text}\n"
         f"📋 **Sizning taklif havolangiz:**\n`{ref_link}`\n"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
 
 
