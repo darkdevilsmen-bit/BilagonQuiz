@@ -19,18 +19,18 @@ ADMIN_ID = 000000000
 
 dp = Dispatcher()
 
-# Foydalanuvchilar bazasi va boshlang'ich liderlar (Haqiqiyroq ko'rinishi uchun yechgan summalari ham qo'shildi)
+# Foydalanuvchilar bazasi va boshlang'ich liderlar (Ballari va pullari mantiqiy moslashtirildi)
 users_db = {
-    "bot_1": {"score": 45, "money": 135000, "withdrawn": 50000, "name": "Bekzod To'rayev", "referrals_count": 0, "referred_users": []},
-    "bot_2": {"score": 38, "money": 64000, "withdrawn": 50000, "name": "Jasurbek Karimov", "referrals_count": 0, "referred_users": []},
-    "bot_3": {"score": 32, "money": 46000, "withdrawn": 50000, "name": "Dilshod Olimov", "referrals_count": 0, "referred_users": []},
-    "bot_4": {"score": 28, "money": 34000, "withdrawn": 50000, "name": "Sardor Rahimov", "referrals_count": 0, "referred_users": []},
-    "bot_5": {"score": 24, "money": 22000, "withdrawn": 50000, "name": "Azizbek Toshmatov", "referrals_count": 0, "referred_users": []},
-    "bot_6": {"score": 20, "money": 10000, "withdrawn": 50000, "name": "Oybek Sharipov", "referrals_count": 0, "referred_users": []},
-    "bot_7": {"score": 17, "money": 1000, "withdrawn": 50000, "name": "Bobur Mirzayev", "referrals_count": 0, "referred_users": []},
-    "bot_8": {"score": 14, "money": 42000, "withdrawn": 0, "name": "Madina Rahimova", "referrals_count": 0, "referred_users": []},
-    "bot_9": {"score": 11, "money": 33000, "withdrawn": 0, "name": "Ziyoda Saidova", "referrals_count": 0, "referred_users": []},
-    "bot_10": {"score": 8, "money": 24000, "withdrawn": 0, "name": "Shaxzodbek", "referrals_count": 0, "referred_users": []}
+    "bot_1": {"score": 85, "money": 205000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 0, "referred_users": []},
+    "bot_2": {"score": 72, "money": 164000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 0, "referred_users": []},
+    "bot_3": {"score": 65, "money": 146000, "withdrawn": 100000, "name": "Dilshod Olimov", "referrals_count": 0, "referred_users": []},
+    "bot_4": {"score": 58, "money": 124000, "withdrawn": 100000, "name": "Sardor Rahimov", "referrals_count": 0, "referred_users": []},
+    "bot_5": {"score": 54, "money": 112000, "withdrawn": 50000, "name": "Azizbek Toshmatov", "referrals_count": 0, "referred_users": []},
+    "bot_6": {"score": 51, "money": 100000, "withdrawn": 50000, "name": "Oybek Sharipov", "referrals_count": 0, "referred_users": []},
+    "bot_7": {"score": 48, "money": 94000, "withdrawn": 50000, "name": "Bobur Mirzayev", "referrals_count": 0, "referred_users": []},
+    "bot_8": {"score": 42, "money": 84000, "withdrawn": 0, "name": "Madina Rahimova", "referrals_count": 0, "referred_users": []},
+    "bot_9": {"score": 35, "money": 70000, "withdrawn": 0, "name": "Ziyoda Saidova", "referrals_count": 0, "referred_users": []},
+    "bot_10": {"score": 28, "money": 56000, "withdrawn": 0, "name": "Shaxzodbek", "referrals_count": 0, "referred_users": []}
 }
 
 verified_users = set()
