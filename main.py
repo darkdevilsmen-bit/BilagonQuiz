@@ -1,4 +1,4 @@
- import logging
+import logging
 import sqlite3
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember
 from telegram.ext import (
@@ -16,11 +16,9 @@ logger = logging.getLogger(__name__)
 
 # --- SOZLAMALAR ---
 TOKEN = "8963661833:AAERa76qlzRiljTUXkqxFxeDEg6_MJKQ44k"
+CHANNEL_ID = -1004317372728  # Kanalning aniq ID raqami
 
-# DIQQAT: Yopiq kanal uchun quyidagi o'ringa -100 bilan boshlanadigan kanal ID raqamini yozing!
-CHANNEL_ID = -1001234567890  # Masalan: -1001845...
-
-# --- BAZA BILAN ISHLASH (Eski foydalanuvchilar va ma'lumotlar saqlanadi) ---
+# --- BAZA BILAN ISHLASH (Eski ma'lumotlar saqlanadi) ---
 def init_db():
     conn = sqlite3.connect("quiz_bot.db")
     cursor = conn.cursor()
@@ -105,15 +103,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     is_subbed = await check_sub_channel(user.id, context)
 
     if not is_subbed:
-        invite_link = "https://t.me/+llFGqeWBsuZlMGYy" # Siz bergan yopiq kanal havolasi
+        invite_link = "https://t.me/+llFGqeWBsuZlMGYy"
         keyboard = [
-            [InlineKeyboardButton("📢 Kanalga a'zo bo'lish", url=invite_link)],
-            [InlineKeyboardButton("✅ A'zo bo'ldim", callback_data="check_subscription")]
+            [InlineKeyboardButton("📢 Kanalga A'zo Bo'lish / So'rov", url=invite_link)],
+            [InlineKeyboardButton("✅ Obunani Tekshirish", callback_data="check_subscription")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
-            "👋 Botdan foydalanish uchun avval quyidagi kanalimizga a'zo bo'lishingiz kerak:",
-            reply_markup=reply_markup
+            "📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling yoki so'rov yuboring:\n\n"
+            "👇 Tugmani bosing, so'ngra **'Obunani Tekshirish'** tugmasini bosing:",
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
         )
     else:
         await show_main_menu(update, context)
@@ -126,10 +126,10 @@ async def check_subscription_callback(update: Update, context: ContextTypes.DEFA
     is_subbed = await check_sub_channel(user_id, context)
 
     if is_subbed:
-        await query.message.edit_text("Rahmat! Obuna tasdiqlandi. 🎉")
+        await query.message.edit_text("Rahmat! Obuna yoki so'rovingiz tasdiqlandi. 🎉")
         await show_main_menu_by_chat(query.message.chat_id, user_id, context)
     else:
-        await query.answer("Siz hali kanalga a'zo bo'lmadingiz! Iltimos, avval kanalga a'zo bo'ling.", show_alert=True)
+        await query.answer("Siz hali kanalga a'zo bo'lmadingiz yoki so'rov yubormadingiz!", show_alert=True)
 
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
