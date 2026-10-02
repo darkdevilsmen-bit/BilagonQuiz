@@ -19,15 +19,15 @@ ADMIN_ID = 000000000
 
 dp = Dispatcher()
 
-# Foydalanuvchilar bazasi va boshlang'ich 10 ta o'zbek ismli bot / raqobatchi liderlar
+# Foydalanuvchilar bazasi va boshlang'ich liderlar (Haqiqiyroq ko'rinishi uchun yechgan summalari ham qo'shildi)
 users_db = {
     "bot_1": {"score": 45, "money": 135000, "withdrawn": 50000, "name": "Bekzod To'rayev", "referrals_count": 0, "referred_users": []},
-    "bot_2": {"score": 38, "money": 114000, "withdrawn": 0, "name": "Jasurbek Karimov", "referrals_count": 0, "referred_users": []},
-    "bot_3": {"score": 32, "money": 96000, "withdrawn": 0, "name": "Dilshod Olimov", "referrals_count": 0, "referred_users": []},
-    "bot_4": {"score": 28, "money": 84000, "withdrawn": 0, "name": "Sardor Rahimov", "referrals_count": 0, "referred_users": []},
-    "bot_5": {"score": 24, "money": 72000, "withdrawn": 0, "name": "Azizbek Toshmatov", "referrals_count": 0, "referred_users": []},
-    "bot_6": {"score": 20, "money": 60000, "withdrawn": 0, "name": "Oybek Sharipov", "referrals_count": 0, "referred_users": []},
-    "bot_7": {"score": 17, "money": 51000, "withdrawn": 0, "name": "Bobur Mirzayev", "referrals_count": 0, "referred_users": []},
+    "bot_2": {"score": 38, "money": 64000, "withdrawn": 50000, "name": "Jasurbek Karimov", "referrals_count": 0, "referred_users": []},
+    "bot_3": {"score": 32, "money": 46000, "withdrawn": 50000, "name": "Dilshod Olimov", "referrals_count": 0, "referred_users": []},
+    "bot_4": {"score": 28, "money": 34000, "withdrawn": 50000, "name": "Sardor Rahimov", "referrals_count": 0, "referred_users": []},
+    "bot_5": {"score": 24, "money": 22000, "withdrawn": 50000, "name": "Azizbek Toshmatov", "referrals_count": 0, "referred_users": []},
+    "bot_6": {"score": 20, "money": 10000, "withdrawn": 50000, "name": "Oybek Sharipov", "referrals_count": 0, "referred_users": []},
+    "bot_7": {"score": 17, "money": 1000, "withdrawn": 50000, "name": "Bobur Mirzayev", "referrals_count": 0, "referred_users": []},
     "bot_8": {"score": 14, "money": 42000, "withdrawn": 0, "name": "Madina Rahimova", "referrals_count": 0, "referred_users": []},
     "bot_9": {"score": 11, "money": 33000, "withdrawn": 0, "name": "Ziyoda Saidova", "referrals_count": 0, "referred_users": []},
     "bot_10": {"score": 8, "money": 24000, "withdrawn": 0, "name": "Shaxzodbek", "referrals_count": 0, "referred_users": []}
@@ -423,7 +423,6 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
     username = message.from_user.username
     money = users_db.get(user_id, {}).get("money", 0)
     
-    # Yechib olingan pul 'withdrawn' ga qo'shiladi (Jami pul reytingda to'g'ri chiqishi uchun)
     users_db[user_id]["withdrawn"] = users_db[user_id].get("withdrawn", 0) + money
     withdrawn_amount = money
     users_db[user_id]["money"] = 0
@@ -616,7 +615,7 @@ async def show_rules(callback: CallbackQuery) -> None:
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "💡 <i>Omad yor bo'lsin! Tugmani bosing va boshlang 👇</i>"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 
