@@ -33,6 +33,7 @@ users_db = {
 }
 
 pending_referrals = {}
+join_requests = set()  # So'rov yuborganlar bazasi
 
 
 class WithdrawStates(StatesGroup):
@@ -119,8 +120,20 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
         del pending_referrals[user_id]
 
 
+@dp.chat_join_request()
+async def handle_join_request(request: ChatJoinRequest) -> None:
+    user_id = request.from_user.id
+    join_requests.add(user_id)
+    user_name = request.from_user.full_name
+    await process_referral_reward(request.bot, user_id, user_name)
+
+
 async def check_user_subscription(bot: Bot, user_id: int) -> bool:
-    """Har safar kanal a'zoligini real vaqt rejimida tekshiradi"""
+    """Foydalanuvchi rostdan ham kanal a'zosi yoki so'rov yuborganligini qat'iy tekshiradi"""
+    # Agar kanalga so'rov tashlagan bo'lsa
+    if user_id in join_requests:
+        return True
+        
     try:
         member = await bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
         if member.status in ["member", "administrator", "creator", "restricted"]:
@@ -177,7 +190,6 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         except:
             pass
 
-    # Har safar tekshiriladi: Agar kanalda bo'lmasa, ruxsat berilmaydi
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -186,8 +198,8 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         ])
         text = (
             f"✨ **Salom, {html.bold(user_name)}!**\n\n"
-            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n"
-            f"👇 Kanalga o'ting, a'zo bo'ling va **'Obunani Tekshirish'** tugmasini bosing:"
+            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling yoki so'rov yuboring:\n\n"
+            f"👇 Tugmani bosing, so'ngra **'Obunani Tekshirish'** tugmasini bosing:"
         )
         await message.answer(text, reply_markup=keyboard)
         return
@@ -210,7 +222,7 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
     
     is_member = await check_user_subscription(callback.bot, user_id)
     if not is_member:
-        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz! Iltimos, avval kanalga obuna bo'ling.", show_alert=True)
+        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz yoki so'rov yubormadingiz! Iltimos, avval obuna bo'ling.", show_alert=True)
         return
 
     await callback.answer("✅ Obuna tasdiqlandi!")
@@ -223,7 +235,6 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
     await command_start_handler(callback.message, state)
 
 
-# Har bir menyu yoki o'yin boshlanishidan oldin ham kanal a'zoligi qat'iy tekshiriladi
 async def verify_access_middleware(callback: CallbackQuery) -> bool:
     user_id = callback.from_user.id
     is_member = await check_user_subscription(callback.bot, user_id)
@@ -335,7 +346,7 @@ async def top_board_handler(callback: CallbackQuery) -> None:
         medal = "🥇" if idx == 1 else ("🥈" if idx == 2 else ("🥉" if idx == 3 else f"{idx}."))
         text += f"{medal} **{name}**\n   🏆 {score} ball | 💰 Jami: {total_earned:,} so'm | 💸 Yechgan: {withdrawn:,} so'm\n\n"
         
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
 
 
@@ -367,7 +378,7 @@ async def referral_info_handler(callback: CallbackQuery) -> None:
         f"{list_text}\n"
         f"📋 **Sizning taklif havolangiz:**\n`{ref_link}`\n"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
 
 
