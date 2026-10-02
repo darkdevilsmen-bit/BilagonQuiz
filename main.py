@@ -19,7 +19,6 @@ ADMIN_ID = 000000000
 
 dp = Dispatcher()
 
-# Foydalanuvchilar bazasi va boshlang'ich liderlar
 users_db = {
     "bot_1": {"score": 85, "money": 205000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 0, "referred_users": []},
     "bot_2": {"score": 72, "money": 164000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 0, "referred_users": []},
@@ -190,6 +189,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         except:
             pass
 
+    # Yangi tekshiruv: Har safar /start bosganda rostdan a'zoligini tekshiradi
     has_access = await check_real_subscription(message.bot, user_id, user_name)
     if not has_access:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -223,7 +223,7 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
         await callback.answer("❌ Siz hali kanalimizga a'zo bo'lmadingiz yoki so'rov yubormadingiz!", show_alert=True)
         return
 
-    await callback.answer()
+    await callback.answer("✅ Obuna tasdiqlandi!")
     try:
         await callback.message.delete()
     except:
@@ -344,7 +344,7 @@ async def referral_info_handler(callback: CallbackQuery) -> None:
         f"{list_text}\n"
         f"📋 **Sizning taklif havolangiz:**\n`{ref_link}`\n"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
 
 
@@ -376,7 +376,7 @@ async def show_balance(callback: CallbackQuery) -> None:
     
     keyboard_buttons = [
         [InlineKeyboardButton(text="💵 Pulni Yechib Olish", callback_data="withdraw_money")],
-        [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]
+        [InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]
     ]
     await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
 
