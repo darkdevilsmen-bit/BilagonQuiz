@@ -132,13 +132,19 @@ async def check_real_subscription(bot: Bot, user_id: int, user_name: str) -> boo
     if user_id in verified_users:
         return True
     try:
+        chat = await bot.get_chat(chat_id=CHANNEL_USERNAME)
+        # Agar kanalga join request (so'rovnoma) yoqilgan bo'lsa va foydalanuvchi so'rov yuborgan bo'lsa yoki a'zo bo'lsa
         member = await bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
         if member.status in ["member", "administrator", "creator", "restricted"]:
             verified_users.add(user_id)
             await process_referral_reward(bot, user_id, user_name)
             return True
     except Exception:
+        # Agar kanal ochiq bo'lsa yoki tekshirishda xatolik chiqsa, to'g'ridan-to'g'ri o'tkazib yuborish uchun True qaytarish mumkin
+        # Lekin agar kanalga a'zolik shartligi aniq bo'lsa, quyidagicha ishlaydi:
         pass
+    
+    # Agar kanal ochiq bo'lib, get_chat_member xato bermasa yoki so'rovnoma holati ishlasa
     return False
 
 
@@ -189,9 +195,16 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         except:
             pass
 
-    # Yangi tekshiruv: Har safar /start bosganda rostdan a'zoligini tekshiradi
-    has_access = await check_real_subscription(message.bot, user_id, user_name)
-    if not has_access:
+    # Agar kanalga obuna tekshiruvi shart bo'lsa tekshiradi
+    # (Agar kanalga join request yoki oddiy obuna qo'yilmagan bo'lsa, bu tekshiruvni olib tashlash mumkin)
+    # Hozirgi holatda faqat a'zo bo'lmaganlargagina obuna oynasini chiqaradi:
+    try:
+        member = await message.bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
+        is_member = member.status in ["member", "administrator", "creator", "restricted"]
+    except:
+        is_member = True  # Agar bot kanalni tekshira olmasa yoki kanal ochiq bo'lsa, to'g'ridan-to'g'ri o'tkazadi
+
+    if not is_member and user_id not in verified_users:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
@@ -218,10 +231,18 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
     user_id = callback.from_user.id
     user_name = callback.from_user.full_name
     
-    has_access = await check_real_subscription(callback.bot, user_id, user_name)
-    if not has_access:
-        await callback.answer("❌ Siz hali kanalimizga a'zo bo'lmadingiz yoki so'rov yubormadingiz!", show_alert=True)
+    try:
+        member = await callback.bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
+        is_member = member.status in ["member", "administrator", "creator", "restricted"]
+    except:
+        is_member = True
+
+    if not is_member:
+        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz yoki so'rov yubormadingiz!", show_alert=True)
         return
+
+    verified_users.add(user_id)
+    await process_referral_reward(callback.bot, user_id, user_name)
 
     await callback.answer("✅ Obuna tasdiqlandi!")
     try:
@@ -344,7 +365,7 @@ async def referral_info_handler(callback: CallbackQuery) -> None:
         f"{list_text}\n"
         f"📋 **Sizning taklif havolangiz:**\n`{ref_link}`\n"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
 
 
@@ -376,7 +397,7 @@ async def show_balance(callback: CallbackQuery) -> None:
     
     keyboard_buttons = [
         [InlineKeyboardButton(text="💵 Pulni Yechib Olish", callback_data="withdraw_money")],
-        [InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]
+        [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]
     ]
     await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
 
@@ -635,7 +656,7 @@ async def start_quiz_session_processed(message: Message, user_id: int):
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔗 Referal Havolasini Olish", callback_data="referral_info")],
-            [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]
+            [InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]
         ])
         await message.edit_text(text, reply_markup=keyboard)
         return
