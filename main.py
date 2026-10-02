@@ -235,7 +235,7 @@ async def select_category_handler(callback: CallbackQuery) -> None:
     user_id = callback.from_user.id
     
     if user_id in users_db and users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠️️ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
+        await callback.message.answer("⚠️ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
         return
 
     keyboard_buttons = []
@@ -423,6 +423,7 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
     username = message.from_user.username
     money = users_db.get(user_id, {}).get("money", 0)
     
+    # Yechib olingan pul 'withdrawn' ga qo'shiladi (Jami pul reytingda to'g'ri chiqishi uchun)
     users_db[user_id]["withdrawn"] = users_db[user_id].get("withdrawn", 0) + money
     withdrawn_amount = money
     users_db[user_id]["money"] = 0
@@ -615,7 +616,7 @@ async def show_rules(callback: CallbackQuery) -> None:
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "💡 <i>Omad yor bo'lsin! Tugmani bosing va boshlang 👇</i>"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 
@@ -639,7 +640,6 @@ async def start_quiz_session_processed(message: Message, user_id: int):
         await message.edit_text(text, reply_markup=keyboard)
         return
 
-    # Eskisini to'liq tozalaymiz
     await cancel_timer(user_id)
 
     cat_key = u_data.get("category", "logic")
@@ -660,7 +660,7 @@ async def start_quiz_session_processed(message: Message, user_id: int):
     u_data["score"] = 0
     u_data["combo"] = 0
     u_data["is_finished"] = False
-    u_data["in_game"] = True  # O'yin qulflandi!
+    u_data["in_game"] = True
     
     await message.edit_text("⏳ *Savollar tayyorlanmoqda... 1-savol boshlanadi 🟢*")
     await send_next_question(message, user_id)
@@ -733,7 +733,7 @@ async def process_answer(callback: CallbackQuery) -> None:
         
     u_data = users_db[user_id]
     if not u_data.get("in_game", False):
-        return  # O'yin tugagan bo'lsa tugmalarni bosib bo'lmaydi
+        return
 
     await cancel_timer(user_id)
     chosen_idx = int(callback.data.split("_")[1])
@@ -781,7 +781,7 @@ async def finish_quiz(message: Message, user_id: int):
     u_data = users_db[user_id]
     await cancel_timer(user_id)
     u_data["is_finished"] = True
-    u_data["in_game"] = False  # O'yin tugadi, qulf ochildi
+    u_data["in_game"] = False
     final_score = u_data["score"]
     final_money = u_data["money"]
     wrong_list = u_data["wrong_answers"]
