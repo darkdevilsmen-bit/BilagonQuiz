@@ -109,7 +109,7 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
                 users_db[referrer_id]["referred_users"].append({"id": user_id, "name": user_name})
                 users_db[referrer_id]["referrals_count"] += 1
                 users_db[referrer_id]["score"] += 5
-                users_db[referrer_id]["money"] += 10000  # Referal uchun +10,000 so'm
+                users_db[referrer_id]["money"] += 10000
                 
                 try:
                     await bot.send_message(
@@ -176,7 +176,8 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
             "category": "logic",
             "name": user_name,
             "timer_task": None,
-            "combo": 0
+            "combo": 0,
+            "in_game": False
         }
     else:
         users_db[user_id]["name"] = user_name
@@ -207,7 +208,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     text = (
         f"✨ **Salom, {html.bold(user_name)}!**\n\n"
         f"🎯 **«Bilag'on Quiz»** botiga xush kelibsiz!\n\n"
-        f"🔥 **Combo Tizimi:** Ketma-ket to'g'ri topganingiz sari har bir savol uchun mukofot oshib boradi (**2,000 so'mdan 5,000+ so'mgacha** va ballar!) 🚀\n\n"
+        f"🔥 **Combo Tizimi:** Ketma-ket to'g'ri topganingiz sari mukofot oshib boradi (2,000 so'mdan 5,000+ so'mgacha!) 🚀\n\n"
         f"⬇️ Quyidagi menyudan kerakli bo'limni tanlang:"
     )
     await message.answer(text, reply_markup=get_main_menu(user_id))
@@ -215,18 +216,29 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
 
 @dp.callback_query(F.data == "check_joined")
 async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
     user_id = callback.from_user.id
     user_name = callback.from_user.full_name
     verified_users.add(user_id)
     await process_referral_reward(callback.bot, user_id, user_name)
     
-    await callback.message.delete()
+    try:
+        await callback.message.delete()
+    except:
+        pass
     await command_start_handler(callback.message, state)
-    await callback.answer("Tabriklaymiz, obuna tasdiqlandi! 🎉", show_alert=True)
 
 
 @dp.callback_query(F.data == "select_category")
 async def select_category_handler(callback: CallbackQuery) -> None:
+    await callback.answer()
+    user_id = callback.from_user.id
+    
+    # Agar foydalanuvchi allaqachon o'yin ichida bo'lsa, boshqa joyga o'tishni cheklaymiz
+    if user_id in users_db and users_db[user_id].get("in_game", False):
+        await callback.message.answer("⚠️ Siz hozir faol test jarayondasiz! Avval testni oxirigacha tugating 🛑")
+        return
+
     keyboard_buttons = []
     for cat_key, cat_val in CATEGORIES_DB.items():
         keyboard_buttons.append([InlineKeyboardButton(text=cat_val["title"], callback_data=f"cat_{cat_key}")])
@@ -234,27 +246,34 @@ async def select_category_handler(callback: CallbackQuery) -> None:
     
     text = "📚 **Test yo'nalishini tanlang:**"
     await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
-    await callback.answer()
 
 
 @dp.callback_query(F.data.startswith("cat_"))
 async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
     user_id = callback.from_user.id
     cat_key = callback.data.split("_")[1]
     
     if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0}
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
         
+    if users_db[user_id].get("in_game", False):
+        await callback.message.answer("⚠️️ Hozir boshqa test ishlamoqda! Avval shuni tugating 🛑")
+        return
+
     users_db[user_id]["category"] = cat_key
     await start_quiz_session_processed(callback.message, user_id)
-    await callback.answer()
 
 
 @dp.callback_query(F.data == "daily_bonus")
 async def daily_bonus_handler(callback: CallbackQuery) -> None:
     user_id = callback.from_user.id
+    if user_id in users_db and users_db[user_id].get("in_game", False):
+        await callback.answer("⚠️ Test paytida bonus olib bo'lmaydi!", show_alert=True)
+        return
+
     if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0}
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
         
     now = datetime.datetime.now()
     last_bonus = users_db[user_id].get("last_bonus")
@@ -270,14 +289,18 @@ async def daily_bonus_handler(callback: CallbackQuery) -> None:
     users_db[user_id]["money"] += bonus_money
     users_db[user_id]["last_bonus"] = now
     
-    await callback.answer(f"🎉 Tabriklaymiz! Kunlik bonus: +{bonus_score} ball va +{bonus_money:,} so'm qo'shildi! 🎁", show_alert=True)
+    await callback.answer(f"🎉 Tabriklaymiz! Kunlik bonus: +{bonus_score} ball va +{bonus_money:,} so'm! 🎁", show_alert=True)
     
     text = "🏠 **Asosiy Menyu:**\n\nKerakli bo'limni tanlang:"
-    await callback.message.edit_text(text, reply_markup=get_main_menu(user_id))
+    try:
+        await callback.message.edit_text(text, reply_markup=get_main_menu(user_id))
+    except:
+        pass
 
 
 @dp.callback_query(F.data == "top_board")
 async def top_board_handler(callback: CallbackQuery) -> None:
+    await callback.answer()
     sorted_users = sorted(users_db.items(), key=lambda x: (x[1].get("money", 0) + x[1].get("withdrawn", 0)), reverse=True)[:10]
     
     text = "🏆 **Top 10 Liderlar Reytingi**\n📊 *(To'plagan ballar, jami pul va yechib olganlar)*\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -292,11 +315,11 @@ async def top_board_handler(callback: CallbackQuery) -> None:
         
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
-    await callback.answer()
 
 
 @dp.callback_query(F.data == "referral_info")
 async def referral_info_handler(callback: CallbackQuery) -> None:
+    await callback.answer()
     user_id = callback.from_user.id
     bot_username = "BilagonQuizBot"
     ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
@@ -322,14 +345,14 @@ async def referral_info_handler(callback: CallbackQuery) -> None:
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
-    await callback.answer()
 
 
 @dp.callback_query(F.data == "my_balance")
 async def show_balance(callback: CallbackQuery) -> None:
+    await callback.answer()
     user_id = callback.from_user.id
     if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "name": callback.from_user.full_name, "combo": 0}
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "name": callback.from_user.full_name, "combo": 0, "in_game": False}
         
     u_data = users_db[user_id]
     score = u_data.get("score", 0)
@@ -355,11 +378,11 @@ async def show_balance(callback: CallbackQuery) -> None:
         [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]
     ]
     await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
-    await callback.answer()
 
 
 @dp.callback_query(F.data == "withdraw_money")
 async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
     user_id = callback.from_user.id
     money = users_db.get(user_id, {}).get("money", 0)
     
@@ -373,7 +396,6 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="my_balance")]])
         await callback.message.edit_text(text, reply_markup=keyboard)
-        await callback.answer()
         return
 
     await state.set_state(WithdrawStates.waiting_for_name)
@@ -382,7 +404,6 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
         f"📝 Pulni o'tkazib berishimiz uchun iltimos, **Ism va Familiyangizni** kiriting:"
     )
     await callback.message.edit_text(text)
-    await callback.answer()
 
 
 @dp.message(WithdrawStates.waiting_for_name)
@@ -403,7 +424,6 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
     username = message.from_user.username
     money = users_db.get(user_id, {}).get("money", 0)
     
-    # Pulni withdrawn ga o'tkazamiz va asosiy balansni 0 qilamiz
     users_db[user_id]["withdrawn"] = users_db[user_id].get("withdrawn", 0) + money
     withdrawn_amount = money
     users_db[user_id]["money"] = 0
@@ -470,6 +490,7 @@ async def admin_panel_handler(message: Message) -> None:
 
 @dp.callback_query(F.data == "admin_change_score")
 async def admin_change_score_start(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
     user_id = callback.from_user.id
     username = callback.from_user.username
     is_admin = (ADMIN_ID and user_id == ADMIN_ID) or (ADMIN_USERNAME and username and username.lower() == ADMIN_USERNAME.lower())
@@ -480,7 +501,6 @@ async def admin_change_score_start(callback: CallbackQuery, state: FSMContext) -
     text = "🆔 Balansini o'zgartirmoqchi bo'lgan foydalanuvchining **Telegram ID** raqamini yuboring:"
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
-    await callback.answer()
 
 
 @dp.message(AdminScoreStates.waiting_for_user_id)
@@ -521,18 +541,17 @@ async def process_admin_score_amount(message: Message, state: FSMContext) -> Non
 
 @dp.callback_query(F.data == "admin_broadcast")
 async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
     user_id = callback.from_user.id
     username = callback.from_user.username
     is_admin = (ADMIN_ID and user_id == ADMIN_ID) or (ADMIN_USERNAME and username and username.lower() == ADMIN_USERNAME.lower())
     if not is_admin:
-        await callback.answer("Huquqingiz yo'q!", show_alert=True)
         return
         
     await state.set_state(BroadcastStates.waiting_for_broadcast_message)
     text = "📢 **Xabar Tarqatish Rejimi**\n\nBarcha foydalanuvchilarga yubormoqchi bo'lgan xabaringizni yuboring:"
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
-    await callback.answer()
 
 
 @dp.message(BroadcastStates.waiting_for_broadcast_message)
@@ -568,16 +587,25 @@ async def process_broadcast(message: Message, state: FSMContext) -> None:
 
 @dp.callback_query(F.data == "back_to_menu")
 async def back_to_menu(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.clear()
+    await callback.answer()
     user_id = callback.from_user.id
+    
+    if user_id in users_db and users_db[user_id].get("in_game", False):
+        await callback.message.answer("⚠️ Hozir faol test jarayondasiz! Orqaga qaytish uchun avval testni oxirigacha tugating 🛑")
+        return
+
+    await state.clear()
     await cancel_timer(user_id)
     text = "🏠 **Asosiy Menyu:**\n\nKerakli bo'limni tanlang:"
-    await callback.message.edit_text(text, reply_markup=get_main_menu(user_id))
-    await callback.answer()
+    try:
+        await callback.message.edit_text(text, reply_markup=get_main_menu(user_id))
+    except:
+        pass
 
 
 @dp.callback_query(F.data == "rules")
 async def show_rules(callback: CallbackQuery) -> None:
+    await callback.answer()
     text = (
         "📜 <b>O ' Y I N   Q O I D A L A R I</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -588,9 +616,8 @@ async def show_rules(callback: CallbackQuery) -> None:
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "💡 <i>Omad yor bo'lsin! Tugmani bosing va boshlang 👇</i>"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-    await callback.answer()
 
 
 async def start_quiz_session_processed(message: Message, user_id: int):
@@ -631,8 +658,9 @@ async def start_quiz_session_processed(message: Message, user_id: int):
     u_data["score"] = 0
     u_data["combo"] = 0
     u_data["is_finished"] = False
+    u_data["in_game"] = True  # O'yin boshlandi, qulflanadi
     
-    await message.edit_text("⏳ *Har xil va noyob savollar tayyorlanmoqda... 1-savol boshlanadi 🟢*")
+    await message.edit_text("⏳ *Savollar tayyorlanmoqda... 1-savol boshlanadi 🟢*")
     await send_next_question(message, user_id)
 
 
@@ -678,7 +706,7 @@ async def send_next_question(message: Message, user_id: int):
         if user_id in users_db and users_db[user_id]["question_num"] == q_num:
             q_text, options, correct_idx = u_data["current_q_data"]
             u_data["wrong_answers"].append((q_text, options[correct_idx]))
-            u_data["combo"] = 0  # Vaqt tugasa combo yonadi
+            u_data["combo"] = 0
             
             u_data["question_num"] += 1
             try:
@@ -696,9 +724,9 @@ async def send_next_question(message: Message, user_id: int):
 
 @dp.callback_query(F.data.startswith("ans_"))
 async def process_answer(callback: CallbackQuery) -> None:
+    await callback.answer()  # Darhol javob berish (qotishni yo'qotadi)
     user_id = callback.from_user.id
     if user_id not in users_db or "current_q_data" not in users_db[user_id]:
-        await callback.answer("O'yin tugagan!", show_alert=True)
         return
         
     await cancel_timer(user_id)
@@ -720,15 +748,21 @@ async def process_answer(callback: CallbackQuery) -> None:
             
         u_data["money"] += earned_money
         
-        await callback.message.edit_text(
-            callback.message.text + f"\n\n✅ **To'g'ri! (+{earned_money:,} so'm) 🔥 Combo x{combo}**"
-        )
+        try:
+            await callback.message.edit_text(
+                callback.message.text + f"\n\n✅ **To'g'ri! (+{earned_money:,} so'm) 🔥 Combo x{combo}**"
+            )
+        except:
+            pass
     else:
         u_data["wrong_answers"].append((q_text, options[correct_idx]))
         u_data["combo"] = 0
-        await callback.message.edit_text(
-            callback.message.text + f"\n\n❌ **Noto'g'ri! 😕 (Combo yondi)**\n💡 To'g'ri javob: *{options[correct_idx]}*"
-        )
+        try:
+            await callback.message.edit_text(
+                callback.message.text + f"\n\n❌ **Noto'g'ri! (Combo yondi)**\n💡 To'g'ri javob: *{options[correct_idx]}*"
+            )
+        except:
+            pass
         
     u_data["question_num"] += 1
     
@@ -736,14 +770,13 @@ async def process_answer(callback: CallbackQuery) -> None:
         await finish_quiz(callback.message, user_id)
     else:
         await send_next_question(callback.message, user_id)
-    await callback.answer()
 
 
 async def finish_quiz(message: Message, user_id: int):
     u_data = users_db[user_id]
     u_data["is_finished"] = True
+    u_data["in_game"] = False  # Test tugadi, qulf ochiladi
     final_score = u_data["score"]
-    # Ushbu o'yinda ishlagan pulini bilish uchun oxirgi qo'shilgan pullarni ko'rsatamiz (yoki jami balansni)
     final_money = u_data["money"]
     wrong_list = u_data["wrong_answers"]
     
