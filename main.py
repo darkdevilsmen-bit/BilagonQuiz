@@ -234,9 +234,8 @@ async def select_category_handler(callback: CallbackQuery) -> None:
     await callback.answer()
     user_id = callback.from_user.id
     
-    # Agar foydalanuvchi allaqachon o'yin ichida bo'lsa, boshqa joyga o'tishni cheklaymiz
     if user_id in users_db and users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠️ Siz hozir faol test jarayondasiz! Avval testni oxirigacha tugating 🛑")
+        await callback.message.answer("⚠️️ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
         return
 
     keyboard_buttons = []
@@ -258,7 +257,7 @@ async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> No
         users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
         
     if users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠️️ Hozir boshqa test ishlamoqda! Avval shuni tugating 🛑")
+        await callback.message.answer("⚠️ Hozir boshqa test ishlamoqda! Avval shuni tugating 🛑")
         return
 
     users_db[user_id]["category"] = cat_key
@@ -269,7 +268,7 @@ async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> No
 async def daily_bonus_handler(callback: CallbackQuery) -> None:
     user_id = callback.from_user.id
     if user_id in users_db and users_db[user_id].get("in_game", False):
-        await callback.answer("⚠️ Test paytida bonus olib bo'lmaydi!", show_alert=True)
+        await callback.answer("⚠️ O'yin paytida bonus olib bo'lmaydi!", show_alert=True)
         return
 
     if user_id not in users_db:
@@ -591,7 +590,7 @@ async def back_to_menu(callback: CallbackQuery, state: FSMContext) -> None:
     user_id = callback.from_user.id
     
     if user_id in users_db and users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠️ Hozir faol test jarayondasiz! Orqaga qaytish uchun avval testni oxirigacha tugating 🛑")
+        await callback.message.answer("⚠️ Hozir faol o'yin ketmoqda! Orqaga qaytish uchun avval testni oxirigacha tugating 🛑")
         return
 
     await state.clear()
@@ -640,6 +639,9 @@ async def start_quiz_session_processed(message: Message, user_id: int):
         await message.edit_text(text, reply_markup=keyboard)
         return
 
+    # Eskisini to'liq tozalaymiz
+    await cancel_timer(user_id)
+
     cat_key = u_data.get("category", "logic")
     pool = list(CATEGORIES_DB[cat_key]["questions"])
     random.shuffle(pool)
@@ -658,7 +660,7 @@ async def start_quiz_session_processed(message: Message, user_id: int):
     u_data["score"] = 0
     u_data["combo"] = 0
     u_data["is_finished"] = False
-    u_data["in_game"] = True  # O'yin boshlandi, qulflanadi
+    u_data["in_game"] = True  # O'yin qulflandi!
     
     await message.edit_text("⏳ *Savollar tayyorlanmoqda... 1-savol boshlanadi 🟢*")
     await send_next_question(message, user_id)
@@ -703,7 +705,7 @@ async def send_next_question(message: Message, user_id: int):
     
     async def timer_countdown():
         await asyncio.sleep(30)
-        if user_id in users_db and users_db[user_id]["question_num"] == q_num:
+        if user_id in users_db and users_db[user_id]["question_num"] == q_num and users_db[user_id].get("in_game", False):
             q_text, options, correct_idx = u_data["current_q_data"]
             u_data["wrong_answers"].append((q_text, options[correct_idx]))
             u_data["combo"] = 0
@@ -724,13 +726,16 @@ async def send_next_question(message: Message, user_id: int):
 
 @dp.callback_query(F.data.startswith("ans_"))
 async def process_answer(callback: CallbackQuery) -> None:
-    await callback.answer()  # Darhol javob berish (qotishni yo'qotadi)
+    await callback.answer()
     user_id = callback.from_user.id
     if user_id not in users_db or "current_q_data" not in users_db[user_id]:
         return
         
-    await cancel_timer(user_id)
     u_data = users_db[user_id]
+    if not u_data.get("in_game", False):
+        return  # O'yin tugagan bo'lsa tugmalarni bosib bo'lmaydi
+
+    await cancel_timer(user_id)
     chosen_idx = int(callback.data.split("_")[1])
     q_text, options, correct_idx = u_data["current_q_data"]
     
@@ -774,8 +779,9 @@ async def process_answer(callback: CallbackQuery) -> None:
 
 async def finish_quiz(message: Message, user_id: int):
     u_data = users_db[user_id]
+    await cancel_timer(user_id)
     u_data["is_finished"] = True
-    u_data["in_game"] = False  # Test tugadi, qulf ochiladi
+    u_data["in_game"] = False  # O'yin tugadi, qulf ochildi
     final_score = u_data["score"]
     final_money = u_data["money"]
     wrong_list = u_data["wrong_answers"]
