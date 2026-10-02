@@ -11,7 +11,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-BOT_TOKEN = "8963661833:AAFxzjb0n0HZux7ss8v_gQUwo-JgsSsZ8_c"
+BOT_TOKEN = "8963661833:AAERa76qlzRiljTUXkqxFxeDEg6_MJKQ44k"
 CHANNEL_USERNAME = "@llFGqeWBsuZlMGYy"  # Rasmiy kanal (Bot kanalga ADMIN bo'lishi shart!)
 CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
 ADMIN_USERNAME = "manmode_admin2"
