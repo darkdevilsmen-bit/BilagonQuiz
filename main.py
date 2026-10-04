@@ -12,7 +12,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand
 
 BOT_TOKEN = "8933394511:AAGOuocar5_Fq1o0V9WVAt2hHmLeZo_qCW4"
-CHANNEL_ID = -1004317372728  # Yopiq kanal ID raqami
+CHANNEL_ID =  -1004317372728 # Yopiq kanal ID raqami
 CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 000000000
