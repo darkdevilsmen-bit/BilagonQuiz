@@ -15,9 +15,10 @@ import os
 # Yangi token o'rnatildi
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAHUEUDY9Rj9pNS9h8jh-RACpKH_LGtxgHY")
 
-# Kerakli kanal sozlamalari
+# Kanal sozlamalari (Faqat bitta kanal)
+REQUIRED_CHANNEL = "@Auto_Captions"
 CHANNEL_ID = -1004317372728  # Yopiq kanal ID raqami
-CHANNEL_LINK = "https://t.me/A_ToolsX"  # Kanal havolasi
+CHANNEL_LINK = "https://t.me/Auto_Captions"
 
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 000000000
@@ -238,12 +239,12 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         text = (
             f"✨ **Salom, {html.bold(user_name)}!**\n\n"
-            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling yoki so'rov yuboring:\n\n"
+            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n"
             f"👇 Tugmani bosing, so'ngra **'Obunani Tekshirish'** tugmasini bosing:"
         )
         await message.answer(text, reply_markup=keyboard)
@@ -291,7 +292,7 @@ async def verify_access_middleware_msg(message: Message) -> bool:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         await message.answer(
