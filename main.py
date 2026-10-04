@@ -20,16 +20,9 @@ ADMIN_ID = 000000000
 dp = Dispatcher()
 
 users_db = {
-    "bot_1": {"score": 85, "money": 205000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 0, "referred_users": []},
-    "bot_2": {"score": 72, "money": 164000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 0, "referred_users": []},
-    "bot_3": {"score": 65, "money": 146000, "withdrawn": 100000, "name": "Dilshod Olimov", "referrals_count": 0, "referred_users": []},
-    "bot_4": {"score": 58, "money": 124000, "withdrawn": 100000, "name": "Sardor Rahimov", "referrals_count": 0, "referred_users": []},
-    "bot_5": {"score": 54, "money": 112000, "withdrawn": 50000, "name": "Azizbek Toshmatov", "referrals_count": 0, "referred_users": []},
-    "bot_6": {"score": 51, "money": 100000, "withdrawn": 50000, "name": "Oybek Sharipov", "referrals_count": 0, "referred_users": []},
-    "bot_7": {"score": 48, "money": 94000, "withdrawn": 50000, "name": "Bobur Mirzayev", "referrals_count": 0, "referred_users": []},
-    "bot_8": {"score": 42, "money": 84000, "withdrawn": 0, "name": "Madina Rahimova", "referrals_count": 0, "referred_users": []},
-    "bot_9": {"score": 35, "money": 70000, "withdrawn": 0, "name": "Ziyoda Saidova", "referrals_count": 0, "referred_users": []},
-    "bot_10": {"score": 28, "money": 56000, "withdrawn": 0, "name": "Shaxzodbek", "referrals_count": 0, "referred_users": []}
+    "bot_1": {"score": 85, "money": 205000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 8, "referred_users": [], "contest_name": "Bekzod To'rayev"},
+    "bot_2": {"score": 72, "money": 164000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 6, "referred_users": [], "contest_name": "Jasurbek Karimov"},
+    "bot_3": {"score": 65, "money": 146000, "withdrawn": 100000, "name": "Dilshod Olimov", "referrals_count": 5, "referred_users": [], "contest_name": "Dilshod Olimov"},
 }
 
 pending_referrals = {}
@@ -39,6 +32,10 @@ approved_users = set()
 class WithdrawStates(StatesGroup):
     waiting_for_name = State()
     waiting_for_card = State()
+
+
+class ContestStates(StatesGroup):
+    waiting_for_contest_name = State()
 
 
 class BroadcastStates(StatesGroup):
@@ -98,7 +95,7 @@ CATEGORIES_DB = {
     }
 }
 
-# Pastki matnli tugmalar (Konkurs qo'shildi, Admin olib tashlandi)
+
 def get_reply_keyboard() -> ReplyKeyboardMarkup:
     keyboard = [
         [KeyboardButton(text="🚀 Viktorinani Boshlash")],
@@ -116,14 +113,14 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
             if not any(u["id"] == user_id for u in users_db[referrer_id]["referred_users"]):
                 users_db[referrer_id]["referred_users"].append({"id": user_id, "name": user_name})
                 users_db[referrer_id]["referrals_count"] += 1
-                users_db[referrer_id]["score"] += 1  # Har bir taklif qilingan odam uchun +1 ball
+                users_db[referrer_id]["score"] += 1  # 1 ta referal = 1 ball
                 users_db[referrer_id]["money"] += 10000
                 
                 try:
                     await bot.send_message(
                         referrer_id,
                         f"🎉 **Ajoyib yangilik!** Siz orqali foydalanuvchi (**{user_name}**) qo'shildi!\n"
-                        f"🎁 Sizga **+1 ball** qo'shildi va hisobingiz yangilandi! 🚀"
+                        f"🎁 Sizga konkurs uchun **+1 ball** qo'shildi! 🚀"
                     )
                 except:
                     pass
@@ -175,6 +172,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
             "last_bonus": None,
             "category": "logic",
             "name": user_name,
+            "contest_name": None,
             "timer_task": None,
             "combo": 0,
             "in_game": False
@@ -283,7 +281,7 @@ async def text_show_balance(message: Message, state: FSMContext) -> None:
         return
     user_id = message.from_user.id
     if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "name": message.from_user.full_name, "combo": 0, "in_game": False}
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "name": message.from_user.full_name, "contest_name": None, "combo": 0, "in_game": False}
         
     u_data = users_db[user_id]
     score = u_data.get("score", 0)
@@ -316,7 +314,7 @@ async def text_daily_bonus(message: Message, state: FSMContext) -> None:
         return
     user_id = message.from_user.id
     if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": message.from_user.full_name, "combo": 0, "in_game": False}
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": message.from_user.full_name, "contest_name": None, "combo": 0, "in_game": False}
         
     now = datetime.datetime.now()
     last_bonus = users_db[user_id].get("last_bonus")
@@ -384,25 +382,93 @@ async def text_referral_info(message: Message, state: FSMContext) -> None:
     await message.answer(text)
 
 
+# KONKURS BO'LIMI
 @dp.message(F.text == "🏆 Konkurs")
 async def text_contest_info(message: Message, state: FSMContext) -> None:
     if not await verify_access_middleware_msg(message):
         return
     user_id = message.from_user.id
+    
+    if user_id not in users_db:
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "referrals_count": 0, "referred_users": [], "name": message.from_user.full_name, "contest_name": None}
+        
+    u_data = users_db[user_id]
+    
+    # Agar ism / raqam hali yozilmagan bo'lsa, ro'yxatdan o'tkazishni so'raymiz
+    if not u_data.get("contest_name"):
+        await state.set_state(ContestStates.waiting_for_contest_name)
+        await message.answer(
+            "🏆 **Katta Konkursga xush kelibsiz!**\n\n"
+            "🎁 Sovrin: **300,000 so'm!**\n"
+            "📌 G'olib eng ko'p odam (referal) qo'shgan ishtirokchi bo'ladi (1 ta referal = 1 ball).\n\n"
+            "📝 Konkursda qatnashish uchun **Ism va Familiyangizni (yoki telefon raqamingizni)** kiriting:"
+        )
+        return
+
+    # Allqachon ro'yxatdan o'tgan bo'lsa - Top 10 talik va shaxsiy o'rnini chiqarib beramiz
+    contest_name = u_data.get("contest_name")
+    refs = u_data.get("referrals_count", 0)
+    
+    # Barcha foydalanuvchilarni referal soni bo'yicha saralash
+    sorted_contestants = sorted(
+        [(uid, data) for uid, data in users_db.items() if not str(uid).startswith("bot_")],
+        key=lambda x: x[1].get("referrals_count", 0),
+        reverse=True
+    )
+    
+    # Foydalanuvchining o'rnini topish
+    user_rank = "Top 10 dan tashqarida"
+    for idx, (uid, _) in enumerate(sorted_contestants, 1):
+        if uid == user_id:
+            user_rank = f"{idx}-o'rin"
+            break
+
+    # Top 10 talikni tuzish
+    top_10_text = "🏆 **Konkurs Ishtirokchilari Top 10 taligi:**\n━━━━━━━━━━━━━━━━━━━━━━\n"
+    top_10 = sorted_contestants[:10]
+    for idx, (uid, data) in enumerate(top_10, 1):
+        c_name = data.get("contest_name", data.get("name", "Ishtirokchi"))
+        c_refs = data.get("referrals_count", 0)
+        medal = "🥇" if idx == 1 else ("🥈" if idx == 2 else ("🥉" if idx == 3 else f"{idx}."))
+        top_10_text += f"{medal} **{c_name}** — 👥 {c_refs} ta odam (ball)\n"
+
     bot_username = (await message.bot.get_me()).username
     ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
-    refs = users_db.get(user_id, {}).get("referrals_count", 0)
-    
+
     text = (
-        f"🏆 **Katta Konkurs!**\n\n"
-        f"🎁 Konkurs sovrini: **300,000 so'm!**\n"
-        f"📌 **Shartlar:** Eng ko'p do'stlarini (odam) taklif qilgan ishtirokchi konkurs g'olibi bo'ladi va 300,000 so'm pul mukofotini qo'lga kiritadi!\n\n"
-        f"👥 Siz taklif qilgan do'stlar soni: **{refs} ta**\n\n"
-        f"🔗 **Sizning shaxsiy konkurs (referal) havolangiz:**\n"
-        f"`{ref_link}`\n\n"
-        f"👇 *Shu havolani do'stlaringizga tarqating va ko'proq odam qo'shib g'olib bo'ling!*"
+        f"🏆 **Sizning Konkurs Statistikangiz:**\n\n"
+        f"👤 Ism/Raqam: **{contest_name}**\n"
+        f"📊 Qo'shgan odamlaringiz: **{refs} ta** (1 referal = 1 ball)\n"
+        f"🏅 Sizning o'rningiz: **{user_rank}**\n\n"
+        f"🎁 Konkurs sovrini: **300,000 so'm**\n\n"
+        f"🔗 **Sizning shaxsiy referal havolangiz:**\n`{ref_link}`\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"{top_10_text}"
     )
     await message.answer(text)
+
+
+@dp.message(ContestStates.waiting_for_contest_name)
+async def process_contest_name(message: Message, state: FSMContext) -> None:
+    contest_name = message.text.strip()
+    user_id = message.from_user.id
+    
+    if user_id not in users_db:
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "referrals_count": 0, "referred_users": [], "name": message.from_user.full_name}
+        
+    users_db[user_id]["contest_name"] = contest_name
+    await state.clear()
+    
+    bot_username = (await message.bot.get_me()).username
+    ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
+    
+    await message.answer(
+        f"✅ **Tabriklaymiz, siz konkursga muvaffaqiyatli ro'yxatdan o'tdingiz!**\n\n"
+        f"👤 Ismingiz saqlandi: **{contest_name}**\n"
+        f"🎁 Sovrin: **300,000 so'm** (Eng ko'p odam qo'shgan g'olib bo'ladi)\n\n"
+        f"🔗 **Sizning shaxsiy referal havolangiz:**\n`{ref_link}`\n\n"
+        f"👇 *Do'stlaringizni taklif qiling va ballar to'plang!*"
+    )
 
 
 @dp.message(F.text == "📜 O'yin Qoidalari")
@@ -412,7 +478,7 @@ async def text_rules(message: Message, state: FSMContext) -> None:
         f"1. Viktorina savollariga to'g'ri javob bering.\n"
         f"2. Combo tizimi orqali ball va pul yutib boring.\n"
         f"3. Balansingizda kamida 50 ball yig'ilgach, pulni yechib olish uchun ariza qoldirishingiz mumkin.\n"
-        f"4. Konkursda g'olib bo'lish uchun eng ko'p odam taklif qiling!"
+        f"4. Konkursda 300,000 so'm yutib olish uchun eng ko'p odam taklif qiling (1 referal = 1 ball)."
     )
     await message.answer(text)
 
@@ -423,7 +489,7 @@ async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> No
     cat_key = callback.data.split("_")[1]
     
     if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "contest_name": None, "combo": 0, "in_game": False}
         
     users_db[user_id]["category"] = cat_key
     await callback.answer("Yo'nalish tanlandi!")
