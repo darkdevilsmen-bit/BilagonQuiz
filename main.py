@@ -13,7 +13,7 @@ from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, 
 
 BOT_TOKEN = "8963661833:AAERa76qlzRiljTUXkqxFxeDEg6_MJKQ44k"
 CHANNEL_ID = -1004317372728  # Sizning yopiq kanalingizning aniq ID raqami
-CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
+CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"  # Faqat sizning havolangiz
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 000000000
 
@@ -126,7 +126,6 @@ async def handle_join_request(request: ChatJoinRequest) -> None:
     approved_users.add(user_id)
     user_name = request.from_user.full_name
     try:
-        # await request.approve()  <-- Avtomatik tasdiqlash o'chirildi
         pass
     except:
         pass
@@ -299,7 +298,7 @@ async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> No
         users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
         
     if users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠️ Hozir boshqa test ishlamoqda! Avval shuni tugating 🛑")
+        await callback.message.answer("⚠️️ Hozir boshqa test ishlamoqda! Avval shuni tugating 🛑")
         return
 
     users_db[user_id]["category"] = cat_key
@@ -441,7 +440,7 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
         needed_more = 50 - score
         text = (
             f"❌ **Mablag'ni yechib olish imkonsiz!**\n\n"
-            f"⚠️ Pulni yechib olish uchun hisobingizda kamida **50 ball** bo'lishi kerak!\n"
+            f"⚠️️ Pulni yechib olish uchun hisobingizda kamida **50 ball** bo'lishi kerak!\n"
             f"📊 Hozirgi ballingiz: **{score} ta ball** (Yana {needed_more} ball kerak)\n\n"
             f"💡 *Viktorina o'ynang va do'stlar taklif qiling!*"
         )
@@ -659,7 +658,7 @@ async def rules_handler(callback: CallbackQuery) -> None:
         f"3. Balansingizda kamida 50 ball yig'ilgach, pulni yechib olish uchun ariza qoldirishingiz mumkin.\n"
         f"4. Do'stlaringizni taklif qilib qo'shimcha bonuslar oling!"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
     await callback.message.edit_text(text, reply_markup=keyboard)
 
 
