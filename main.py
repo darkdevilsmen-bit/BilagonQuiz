@@ -12,12 +12,12 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand
 import os
 
-# Token Railway muhit o'zgaruvchisidan olinadi
-BOT_TOKEN = os.getenv("BOT")
+# Yangi token o'rnatildi
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAHUEUDY9Rj9pNS9h8jh-RACpKH_LGtxgHY")
 
-# 🛑 O'ZINGizning KANALINGIZ MA'LUMOTLARINI SHU YERGA YOZING:
-CHANNEL_ID = -1004317372728  # O'z kanalingizning ID raqami (masalan: -1001234567890)
-CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"  # O'z kanalingiz havolasi
+# Kerakli kanal sozlamalari
+CHANNEL_ID = -1004317372728  # Yopiq kanal ID raqami
+CHANNEL_LINK = "https://t.me/A_ToolsX"  # Kanal havolasi
 
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 000000000
@@ -238,12 +238,12 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         text = (
             f"✨ **Salom, {html.bold(user_name)}!**\n\n"
-            f"📢 Botdan foydalanish uchun avval kanalimizga a'zo bo'ling:\n\n"
+            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling yoki so'rov yuboring:\n\n"
             f"👇 Tugmani bosing, so'ngra **'Obunani Tekshirish'** tugmasini bosing:"
         )
         await message.answer(text, reply_markup=keyboard)
@@ -291,11 +291,11 @@ async def verify_access_middleware_msg(message: Message) -> bool:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         await message.answer(
-            "📢 Botdan foydalanish uchun avval kanalimizga a'zo bo'ling:\n\n👇 Tugmani bosing:",
+            "📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n👇 Tugmani bosing:",
             reply_markup=keyboard
         )
         return False
