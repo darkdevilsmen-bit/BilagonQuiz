@@ -436,7 +436,6 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
     user_id = callback.from_user.id
     u_data = users_db.get(user_id, {"score": 0, "money": 0})
     score = u_data.get("score", 0)
-    money = u_data.get("money", 0)
     
     if score < 50:
         needed_more = 50 - score
@@ -485,7 +484,7 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
     users_db[user_id]["withdrawn"] = users_db[user_id].get("withdrawn", 0) + money
     withdrawn_amount = money
     users_db[user_id]["money"] = 0
-    users_db[user_id]["score"] = 0  # Ballarni ham nollash
+    users_db[user_id]["score"] = 0
     
     await state.clear()
     
@@ -667,7 +666,6 @@ async def rules_handler(callback: CallbackQuery) -> None:
 async def main() -> None:
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     
-    # Botning pastki chap burchagidagi ko'k menyu tugmasini sozlash (/start)
     await bot.set_my_commands([
         BotCommand(command="start", description="Botni qayta ishga tushirish / Asosiy menyu")
     ])
