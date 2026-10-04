@@ -9,7 +9,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, BotCommand
 
 BOT_TOKEN = "8963661833:AAERa76qlzRiljTUXkqxFxeDEg6_MJKQ44k"
 CHANNEL_ID = -1004317372728  # Sizning yopiq kanalingizning aniq ID raqami
@@ -303,7 +303,6 @@ async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> No
         return
 
     users_db[user_id]["category"] = cat_key
-    # O'yin boshlash funksiyasi mavjud bo'lsa ishlaydi
 
 
 @dp.callback_query(F.data == "daily_bonus")
@@ -424,7 +423,7 @@ async def show_balance(callback: CallbackQuery) -> None:
     
     keyboard_buttons = [
         [InlineKeyboardButton(text="💵 Pulni Yechib Olish", callback_data="withdraw_money")],
-        [InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]
+        [InlineKeyboardButton(text="◀ Orqaga", callback_data="back_to_menu")]
     ]
     await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
 
@@ -435,15 +434,17 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
         return
     await callback.answer()
     user_id = callback.from_user.id
-    money = users_db.get(user_id, {}).get("money", 0)
+    u_data = users_db.get(user_id, {"score": 0, "money": 0})
+    score = u_data.get("score", 0)
+    money = u_data.get("money", 0)
     
-    if money < 50000:
-        needed_more = 50000 - money
+    if score < 50:
+        needed_more = 50 - score
         text = (
             f"❌ **Mablag'ni yechib olish imkonsiz!**\n\n"
-            f"⚠️ Pulni yechib olish uchun hisobingizda kamida **50,000 so'm** bo'lishi kerak!\n"
-            f"📊 Hozirgi balansingiz: **{money:,} so'm** (Yana {needed_more:,} so'm kerak)\n\n"
-            f"💡 *Combo bilan ko'proq o'ynang va do'stlar taklif qiling!*"
+            f"⚠️ Pulni yechib olish uchun hisobingizda kamida **50 ball** bo'lishi kerak!\n"
+            f"📊 Hozirgi ballingiz: **{score} ta ball** (Yana {needed_more} ball kerak)\n\n"
+            f"💡 *Viktorina o'ynang va do'stlar taklif qiling!*"
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="my_balance")]])
         await callback.message.edit_text(text, reply_markup=keyboard)
@@ -451,7 +452,7 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
 
     await state.set_state(WithdrawStates.waiting_for_name)
     text = (
-        f"✅ **Tabriklaymiz! Balansingiz yetarli ({money:,} so'm).**\n\n"
+        f"✅ **Tabriklaymiz! Ballingiz yetarli ({score} ball).**\n\n"
         f"📝 Pulni o'tkazib berishimiz uchun iltimos, **Ism va Familiyangizni** kiriting:"
     )
     await callback.message.edit_text(text)
@@ -484,6 +485,7 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
     users_db[user_id]["withdrawn"] = users_db[user_id].get("withdrawn", 0) + money
     withdrawn_amount = money
     users_db[user_id]["money"] = 0
+    users_db[user_id]["score"] = 0  # Ballarni ham nollash
     
     await state.clear()
     
@@ -595,6 +597,46 @@ async def process_admin_score_amount(message: Message, state: FSMContext) -> Non
         await message.answer("❌ Noto'g'ri qiymat! Faqat butun son yuboring:")
 
 
+@dp.callback_query(F.data == "admin_broadcast")
+async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
+    user_id = callback.from_user.id
+    username = callback.from_user.username
+    is_admin = (ADMIN_ID and user_id == ADMIN_ID) or (ADMIN_USERNAME and username and username.lower() == ADMIN_USERNAME.lower())
+    if not is_admin:
+        return
+        
+    await state.set_state(BroadcastStates.waiting_for_broadcast_message)
+    text = "📢 Barcha foydalanuvchilarga yubormoqchi bo'lgan **xabaringizni** (matn, rasm yoki video) yuboring:"
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="back_to_menu")]])
+    await callback.message.edit_text(text, reply_markup=keyboard)
+
+
+@dp.message(BroadcastStates.waiting_for_broadcast_message)
+async def process_broadcast(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    success = 0
+    failed = 0
+    
+    status_msg = await message.answer("📤 Xabar tarqatish boshlandi...")
+    
+    for uid in users_db.keys():
+        if str(uid).startswith("bot_"):
+            continue
+        try:
+            await message.send_copy(chat_id=int(uid))
+            success += 1
+            await asyncio.sleep(0.05)
+        except:
+            failed += 1
+            
+    await status_msg.edit_text(
+        f"✅ **Xabar tarqatish yakunlandi!**\n\n"
+        f"📤 Muvaffaqiyatli yuborildi: **{success} ta**\n"
+        f"❌ Xatolik (bloklaganlar): **{failed} ta**"
+    )
+
+
 @dp.callback_query(F.data == "back_to_menu")
 async def back_to_menu_handler(callback: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
@@ -615,7 +657,7 @@ async def rules_handler(callback: CallbackQuery) -> None:
         f"📜 **O'yin Qoidalari:**\n\n"
         f"1. Viktorina savollariga to'g'ri javob bering.\n"
         f"2. Combo tizimi orqali ball va pul yutib boring.\n"
-        f"3. Balansingiz 50,000 so'mga yetgach, pulni yechib olish uchun ariza qoldirishingiz mumkin.\n"
+        f"3. Balansingizda kamida 50 ball yig'ilgach, pulni yechib olish uchun ariza qoldirishingiz mumkin.\n"
         f"4. Do'stlaringizni taklif qilib qo'shimcha bonuslar oling!"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
@@ -624,6 +666,12 @@ async def rules_handler(callback: CallbackQuery) -> None:
 
 async def main() -> None:
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    
+    # Botning pastki chap burchagidagi ko'k menyu tugmasini sozlash (/start)
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Botni qayta ishga tushirish / Asosiy menyu")
+    ])
+    
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     print("Bot ishga tushdi...")
     await dp.start_polling(bot)
