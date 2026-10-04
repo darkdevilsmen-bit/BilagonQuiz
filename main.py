@@ -10,16 +10,21 @@ from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand
+import os
 
-BOT_TOKEN = "8933394511:AAGOuocar5_Fq1o0V9WVAt2hHmLeZo_qCW4"
-CHANNEL_ID =  -1004317372728 # Yopiq kanal ID raqami
-CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
+# Token Railway muhit o'zgaruvchisidan olinadi
+BOT_TOKEN = os.getenv("BOT")
+
+# 🛑 O'ZINGizning KANALINGIZ MA'LUMOTLARINI SHU YERGA YOZING:
+CHANNEL_ID = -1004317372728  # O'z kanalingizning ID raqami (masalan: -1001234567890)
+CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"  # O'z kanalingiz havolasi
+
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 000000000
 
 dp = Dispatcher()
 
-# Dastlabki ishtirokchilar bazasi (Ism va raqamlar aniq ko'rinishi uchun to'g'irlandi)
+# Dastlabki ishtirokchilar bazasi
 users_db = {
     1001: {"score": 156, "money": 450000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 52, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
     1002: {"score": 141, "money": 400000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 47, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
@@ -212,22 +217,11 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     
     if user_id not in users_db:
         users_db[user_id] = {
-            "score": 0,
-            "money": 0,
-            "withdrawn": 0,
-            "question_num": 1,
-            "game_questions": [],
-            "wrong_answers": [],
-            "referrals_count": 0,
-            "referred_users": [],
-            "last_bonus": None,
-            "category": "logic",
-            "name": user_name,
-            "timer_task": None,
-            "combo": 0,
-            "in_game": False,
-            "is_contestant": False,
-            "last_quiz_time": None
+            "score": 0, "money": 0, "withdrawn": 0, "question_num": 1,
+            "game_questions": [], "wrong_answers": [], "referrals_count": 0,
+            "referred_users": [], "last_bonus": None, "category": "logic",
+            "name": user_name, "timer_task": None, "combo": 0,
+            "in_game": False, "is_contestant": False, "last_quiz_time": None
         }
     else:
         users_db[user_id]["name"] = user_name
@@ -244,12 +238,12 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         text = (
             f"✨ **Salom, {html.bold(user_name)}!**\n\n"
-            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling yoki so'rov yuboring:\n\n"
+            f"📢 Botdan foydalanish uchun avval kanalimizga a'zo bo'ling:\n\n"
             f"👇 Tugmani bosing, so'ngra **'Obunani Tekshirish'** tugmasini bosing:"
         )
         await message.answer(text, reply_markup=keyboard)
@@ -297,11 +291,11 @@ async def verify_access_middleware_msg(message: Message) -> bool:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         await message.answer(
-            "📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n👇 Tugmani bosing:",
+            "📢 Botdan foydalanish uchun avval kanalimizga a'zo bo'ling:\n\n👇 Tugmani bosing:",
             reply_markup=keyboard
         )
         return False
@@ -478,8 +472,6 @@ async def text_daily_bonus(message: Message, state: FSMContext) -> None:
 async def text_top_board(message: Message, state: FSMContext) -> None:
     if not await verify_access_middleware_msg(message):
         return
-    
-    # To'g'rilangan tartiblash: Bal va umumiy mablag' bo'yicha to'g'ri ko'rsatish
     sorted_users = sorted(
         users_db.values(), 
         key=lambda x: (x.get("score", 0), x.get("money", 0) + x.get("withdrawn", 0)), 
