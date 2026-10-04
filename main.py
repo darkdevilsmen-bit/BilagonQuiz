@@ -61,7 +61,7 @@ class AdminScoreStates(StatesGroup):
     waiting_for_score_amount = State()
 
 
-# DTM savollari: Easy, Medium, Hard darajalari bilan
+# Kengaytirilgan va qiyinlashtirilgan DTM savollari bazasi (Easy, Medium, Hard)
 CATEGORIES_DB = {
     "logic": {
         "title": "🧠 Mantiqiy Savollar (DTM)",
@@ -75,7 +75,10 @@ CATEGORIES_DB = {
             ("Besh aka-ukaning bittadan singlisi bor. Hammasi bo'lib uylar nechta kishi yashaydi?", ["6 kishi", "10 kishi", "5 kishi", "7 kishi"], 0, "medium"),
             ("Qaysi dengizda suv yo'q?", ["Qora dengizda", "Xaritadagi dengizda", "Orol dengizida", "Qizil dengizda"], 1, "medium"),
             ("Qaysi narsa qanchalik ko'p tozalasangiz, shunchalik qorayib boradi?", ["Doska", "Kiyim", "Oyna", "Gilam"], 0, "hard"),
-            ("Dunyodagi eng tez harakatlanadigan narsa nima?", ["Ovoz", "Nur (Yorug'lik)", "Shamolsiz havo", "Raketa"], 1, "hard")
+            ("Dunyodagi eng tez harakatlanadigan narsa nima?", ["Ovoz", "Nur (Yorug'lik)", "Shamolsiz havo", "Raketa"], 1, "hard"),
+            ("Soat 15:00 da soatning soat mili bilan minut mili orasidagi burchak necha gradus bo'ladi?", ["90 gradus", "75 gradus", "60 gradus", "120 gradus"], 0, "hard"),
+            ("Bir kishi o'rmonda yurib, 3 ta olma topdi va ularni yeb qo'ydi. Uning qornida nechta olma qoldi?", ["3 ta", "0 ta", "1 ta", "Ma'lum emas"], 1, "hard"),
+            ("Agar 5 ta mushuk 5 ta sichqonni 5 minutda tutsa, 100 ta mushuk 100 ta sichqonni necha minutda tutadi?", ["100 minut", "5 minut", "20 minut", "10 minut"], 1, "hard")
         ]
     },
     "it": {
@@ -90,7 +93,9 @@ CATEGORIES_DB = {
             ("HTML bu nima?", ["Dasturlash tili", "Belgilash tili", "Ma'lumotlar bazasi", "Antivirus"], 1, "medium"),
             ("Eng mashhur ma'lumotlar bazasini boshqarish tizimlaridan biri?", ["SQL Server", "Photoshop", "Notepad", "Word"], 0, "hard"),
             ("Kibernetika fanining asoschisi kim?", ["Norbert Winner", "Alan Turing", "Blez Paskal", "Albert Eynshteyn"], 0, "hard"),
-            ("Sun'iy intellekt qisqartmasi qaysi?", ["AI", "IT", "CPU", "UI"], 0, "hard")
+            ("Sun'iy intellekt qisqartmasi qaysi?", ["AI", "IT", "CPU", "UI"], 0, "hard"),
+            ("Obyektga yo'naltirilgan dasturlash (OOP) tamoyillariga kirmaydigan tushunchani toping?", ["Inkapsulyatsiya", "Polimorfizm", "Kompilyatsiya", "Merosxo'rlik"], 2, "hard"),
+            ("Tarmoqdagi har bir qurilmaning unikal IP manzili necha bitdan iborat (IPv4)?", ["32 bit", "64 bit", "128 bit", "16 bit"], 0, "hard")
         ]
     },
     "biology": {
@@ -105,7 +110,9 @@ CATEGORIES_DB = {
             ("Achitqi zamburug'lari qaysi guruhga kiradi?", ["Bakteriyalar", "Zamburug'lar", "Viruslar", "Tuban o'simliklar"], 1, "medium"),
             ("Oqsillar monomeri nima?", ["Nukleotid", "Aminokislota", "Glyukoza", "Gliserin"], 1, "hard"),
             ("Odamda necha juft bosh miya nervlari mavjud?", ["10 juft", "12 juft", "24 juft", "31 juft"], 1, "hard"),
-            ("Mendel qonunlari qaysi fanga tegishli?", ["Genetika", "Anatomiya", "Ekologiya", "Sitologiya"], 0, "hard")
+            ("Mendel qonunlari qaysi fanga tegishli?", ["Genetika", "Anatomiya", "Ekologiya", "Sitologiya"], 0, "hard"),
+            ("Odam skeletida nechta suyak mavjud?", ["206 ta", "210 ta", "198 ta", "220 ta"], 0, "medium"),
+            ("Mitoxondriyada qanday jarayon kechadi?", ["Oqsillar sintezi", "ATF sintezi (energiya hosil bo'lishi)", "Lipidlar parchalanishi", "RNK transkripsiyasi"], 1, "hard")
         ]
     },
     "chemistry": {
@@ -120,7 +127,9 @@ CATEGORIES_DB = {
             ("Sulfat kislotaning formulasi qanday?", ["HCl", "H2SO4", "HNO3", "H3PO4"], 1, "medium"),
             ("Uglerodning allotropik shakl o'zgarishi qaysi?", ["Olmos va grafit", "Oltin va kumush", "Temir va cho'yan", "Kislorod va ozon"], 0, "hard"),
             ("Kislotali yomg'irlarning paydo bo'lishiga asosiy sababchi qaysi gaz?", ["Azot oksid", "Oltingugurt dioksidi", "Metan", "Neon"], 1, "hard"),
-            ("Elektrolitik dissosilanish nazariyasini kim yaratgan?", ["Arrhenius", "Mendeleyev", "Lomonosov", "Butlerov"], 0, "hard")
+            ("Elektrolitik dissosilanish nazariyasini kim yaratgan?", ["Arrhenius", "Mendeleyev", "Lomonosov", "Butlerov"], 0, "hard"),
+            ("Natriy gidroksidning trivial (oddiy) nomi nima?", ["Kustik soda", "Söndirilgan ohak", "osh tuzi", "Choy soda"], 0, "hard"),
+            ("Alkanlarning umumiy formulasi qaysi?", ["CnH2n", "CnH2n+2", "CnH2n-2", "CnH2n-6"], 1, "hard")
         ]
     },
     "history": {
@@ -135,7 +144,9 @@ CATEGORIES_DB = {
             ("Fransiyaning poytaxti qaysi shahar?", ["Berlin", "Parij", "Madrid", "Rim"], 1, "medium"),
             ("Dunyodagi eng baland tog' cho'qqisi qaysi?", ["Everest", "Elbrus", "Kilimanjaro", "Chimyon"], 0, "hard"),
             ("Boburiylar sulolasining asoschisi kim?", ["Zahiriddin Muhammad Bobur", "Amir Temur", "Mirzo Ulug'bek", "Temur Malik"], 0, "hard"),
-            ("Yer yuzida nechta okean bor?", ["4 ta", "5 ta", "6 ta", "3 ta"], 1, "hard")
+            ("Yer yuzida nechta okean bor?", ["4 ta", "5 ta", "6 ta", "3 ta"], 1, "hard"),
+            ("Qaysi sulola davrida O'zbekiston hududida Islom dini davlat dini deb e'lon qilindi?", ["Somoniylar", "Qoraxoniylar", "G'aznaviylar", "Temuriylar"], 0, "hard"),
+            ("Dunyodagi eng chuqur ko'l qaysi?", ["Baykal", "Viktoriya", "Kaspiskiy", "Tanganika"], 0, "medium")
         ]
     }
 }
@@ -250,7 +261,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     text = (
         f"✨ **Salom, {html.bold(user_name)}!**\n\n"
         f"🎯 **«Bilag'on Quiz»** botiga xush kelibsiz!\n\n"
-        f"⬇️ Quyidagi menyudan kerakli bo'limni tanlang:"
+        f"⬇️️ Quyidagi menyudan kerakli bo'limni tanlang:"
     )
     await message.answer(text, reply_markup=get_reply_keyboard())
 
@@ -335,6 +346,7 @@ async def start_quiz_game(callback: CallbackQuery, state: FSMContext) -> None:
     if user_id not in users_db:
         users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
         
+    # Bazadan tasodifiy 10 ta savol tanlab olamiz
     questions = random.sample(CATEGORIES_DB[cat_key]["questions"], 10)
     users_db[user_id]["game_questions"] = questions
     users_db[user_id]["question_num"] = 0
@@ -809,7 +821,6 @@ async def process_broadcast(message: Message, state: FSMContext) -> None:
 async def main() -> None:
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     
-    # Eski kesh va ulanishlarni tozalash uchun webhookni o'chiramiz
     await bot.delete_webhook(drop_pending_updates=True)
     
     await bot.set_my_commands([
