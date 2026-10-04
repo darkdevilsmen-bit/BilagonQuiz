@@ -26,7 +26,6 @@ users_db = {
     "bot_3": {"score": 120, "money": 350000, "withdrawn": 100000, "name": "Dilshod Olimov", "referrals_count": 40, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
 }
 
-# 33 ta ishtirokchi ro'yxatini to'ldirib qo'yamiz
 for i in range(4, 34):
     users_db[f"bot_{i}"] = {
         "score": random.randint(10, 90),
@@ -62,50 +61,81 @@ class AdminScoreStates(StatesGroup):
     waiting_for_score_amount = State()
 
 
+# DTM savollari: Easy, Medium, Hard darajalari bilan (Mantiq, IT, Tarix, Biologiya, Kimyo)
 CATEGORIES_DB = {
     "logic": {
-        "title": "🧠 Mantiqiy Savollar",
+        "title": "🧠 Mantiqiy Savollar (DTM)",
         "questions": [
-            ("Qaysi oyda 28 kun bor?", ["Hamma oylarda", "Faqat fevralda", "Faqat iyunda", "Fevral va martda"], 0),
-            ("O'choqqa o'tin qablasangiz, birinchi bo'lib nimani yoqasiz?", ["O'tinni", "Gugurtni", "Kül ni", "Qog'ozni"], 1),
-            ("Yerdan ko'tarish oson, lekin uzoqqa otib bo'lmaydi. Bu nima?", ["Tosh", "Tuk", "Qum", "Suv"], 1),
-            ("5 ta olma bor edi, 3 tasini olib qo'yishdi. Sizda nechta olma bor?", ["2 ta", "3 ta", "5 ta", "1 ta"], 1),
-            ("O'z egasidan qochib ketmaydigan, lekin doim ergashadigan narsa nima?", ["Soyaboni", "Soya", "Etik", "Do'ppi"], 1),
-            ("Ikki kishi shaxmat o'ynashdi. Ular 5 ta partiya o'ynashdi va har biri 3 tadan g'alaba qozondi. Bu qanday mumkin?", ["Durang bo'lgan", "Ular birga o'ynashmagan", "Boshqalar bilan o'ynagan", "Xato savol"], 1),
-            ("Besh aka-ukaning bittadan singlisi bor. Hammasi bo'lib uylar nechta kishi yashaydi?", ["6 kishi", "10 kishi", "5 kishi", "7 kishi"], 0),
-            ("Qaysi dengizda suv yo'q?", ["Qora dengizda", "Xaritadagi dengizda", "Orol dengizida", "Qizil dengizda"], 1),
-            ("Qaysi narsa qanchalik ko'p tozalasangiz, shunchalik qorayib boradi?", ["Doska", "Kiyim", "Oyna", "Gilam"], 0),
-            ("Dunyodagi eng tez harakatlanadigan narsa nima?", ["Ovoz", "Nur (Yorug'lik)", "Shamolsiz havo", "Raketa"], 1)
+            ("Qaysi oyda 28 kun bor?", ["Hamma oylarda", "Faqat fevralda", "Faqat iyunda", "Fevral va martda"], 0, "easy"),
+            ("O'choqqa o'tin qablasangiz, birinchi bo'lib nimani yoqasiz?", ["O'tinni", "Gugurtni", "Kül ni", "Qog'ozni"], 1, "easy"),
+            ("Yerdan ko'tarish oson, lekin uzoqqa otib bo'lmaydi. Bu nima?", ["Tosh", "Tuk", "Qum", "Suv"], 1, "easy"),
+            ("5 ta olma bor edi, 3 tasini olib qo'yishdi. Sizda nechta olma bor?", ["2 ta", "3 ta", "5 ta", "1 ta"], 1, "easy"),
+            ("O'z egasidan qochib ketmaydigan, lekin doim ergashadigan narsa nima?", ["Soyaboni", "Soya", "Etik", "Do'ppi"], 1, "medium"),
+            ("Ikki kishi shaxmat o'ynashdi. Ular 5 ta partiya o'ynashdi va har biri 3 tadan g'alaba qozondi. Bu qanday mumkin?", ["Durang bo'lgan", "Ular birga o'ynashmagan", "Boshqalar bilan o'ynagan", "Xato savol"], 1, "medium"),
+            ("Besh aka-ukaning bittadan singlisi bor. Hammasi bo'lib uylar nechta kishi yashaydi?", ["6 kishi", "10 kishi", "5 kishi", "7 kishi"], 0, "medium"),
+            ("Qaysi dengizda suv yo'q?", ["Qora dengizda", "Xaritadagi dengizda", "Orol dengizida", "Qizil dengizda"], 1, "medium"),
+            ("Qaysi narsa qanchalik ko'p tozalasangiz, shunchalik qorayib boradi?", ["Doska", "Kiyim", "Oyna", "Gilam"], 0, "hard"),
+            ("Dunyodagi eng tez harakatlanadigan narsa nima?", ["Ovoz", "Nur (Yorug'lik)", "Shamolsiz havo", "Raketa"], 1, "hard")
         ]
     },
     "it": {
-        "title": "💻 IT & Texnologiyalar",
+        "title": "💻 IT & Texnologiyalar (DTM)",
         "questions": [
-            ("Python dasturlash tilining asoschisi kim?", ["Guido van Rossum", "Livan Torvalds", "Bill Geyts", "Stiv Jobs"], 0),
-            ("Kompyuterning 'miyasi' nima deb ataladi?", ["RAM", "Protsessor (CPU)", "Videokarta", "Qattiq disk"], 1),
-            ("WWW qisqartmasi nimani anglatadi?", ["World Wide Web", "World Web Wide", "Web Wide World", "Wide World Web"], 0),
-            ("Qaysi biri operatsion tizim emas?", ["Linux", "Windows", "Google Chrome", "macOS"], 2),
-            ("1 Bayt necha Bitdan iborat?", ["8", "1024", "16", "32"], 0),
-            ("Internetning otasi deb kim hisoblanadi?", ["Tim Berners-Li", "Vint Cerf", "Mark Zukerberg", "Ilon Mask"], 1),
-            ("HTML bu nima?", ["Dasturlash tili", "Belgilash tili", "Ma'lumotlar bazasi", "Antivirus"], 1),
-            ("Eng mashhur ma'lumotlar bazasini boshqarish tizimlaridan biri?", ["SQL Server", "Photoshop", "Notepad", "Word"], 0),
-            ("Kibernetika fanining asoschisi kim?", ["Norbert Winner", "Alan Turing", "Blez Paskal", "Albert Eynshteyn"], 0),
-            ("Sun'iy intellekt qisqartmasi qaysi?", ["AI", "IT", "CPU", "UI"], 0)
+            ("Python dasturlash tilining asoschisi kim?", ["Guido van Rossum", "Livan Torvalds", "Bill Geyts", "Stiv Jobs"], 0, "easy"),
+            ("Kompyuterning 'miyasi' nima deb ataladi?", ["RAM", "Protsessor (CPU)", "Videokarta", "Qattiq disk"], 1, "easy"),
+            ("WWW qisqartmasi nimani anglatadi?", ["World Wide Web", "World Web Wide", "Web Wide World", "Wide World Web"], 0, "easy"),
+            ("Qaysi biri operatsion tizim emas?", ["Linux", "Windows", "Google Chrome", "macOS"], 2, "easy"),
+            ("1 Bayt necha Bitdan iborat?", ["8", "1024", "16", "32"], 0, "medium"),
+            ("Internetning otasi deb kim hisoblanadi?", ["Tim Berners-Li", "Vint Cerf", "Mark Zukerberg", "Ilon Mask"], 1, "medium"),
+            ("HTML bu nima?", ["Dasturlash tili", "Belgilash tili", "Ma'lumotlar bazasi", "Antivirus"], 1, "medium"),
+            ("Eng mashhur ma'lumotlar bazasini boshqarish tizimlaridan biri?", ["SQL Server", "Photoshop", "Notepad", "Word"], 0, "hard"),
+            ("Kibernetika fanining asoschisi kim?", ["Norbert Winner", "Alan Turing", "Blez Paskal", "Albert Eynshteyn"], 0, "hard"),
+            ("Sun'iy intellekt qisqartmasi qaysi?", ["AI", "IT", "CPU", "UI"], 0, "hard")
+        ]
+    },
+    "biology": {
+        "title": "🧬 Biologiya (DTM)",
+        "questions": [
+            ("Hujayraning energetik markazi qaysi organoid?", ["Ribosoma", "Mitoxondriya", "Lizosoma", "Yadro"], 1, "easy"),
+            ("Odam organizmida nechta juft qovurg'a bor?", ["10 ta", "11 ta", "12 ta", "14 ta"], 2, "easy"),
+            ("Fotosintez jarayoni qaysi organoidda sodir bo'ladi?", ["Xloroplast", "Vakuola", "Ribosoma", "Sitoplazma"], 0, "easy"),
+            ("Odamda qon qaysi a'zoda tozalanadi?", ["Yurak", "Buyrak", "O'pka", "Jigar"], 1, "medium"),
+            ("DNK molekulasining tuzilishini kim kashf etgan?", ["Uotson va Krik", "Darvin va Mendel", "Lister va Paster", "Guk va Xuk"], 0, "medium"),
+            ("Odam organizmidagi eng yirik bez qaysi?", ["Oshqozon osti bezi", "Jigar", "Qalqonsimon bez", "Buyrak usti bezi"], 1, "medium"),
+            ("Achitqi zamburug'lari qaysi guruhga kiradi?", ["Bakteriyalar", "Zamburug'lar", "Viruslar", "Tuban o'simliklar"], 1, "medium"),
+            ("Oqsillar monomeri nima?", ["Nukleotid", "Aminokislota", "Glyukoza", "Gliserin"], 1, "hard"),
+            ("Odamda necha juft bosh miya nervlari mavjud?", ["10 juft", "12 juft", "24 juft", "31 juft"], 1, "hard"),
+            ("Mendel qonunlari qaysi fanga tegishli?", ["Genetika", "Anatomiya", "Ekologiya", "Sitologiya"], 0, "hard")
+        ]
+    },
+    "chemistry": {
+        "title": "🧪 Kimyo (DTM)",
+        "questions": [
+            ("Suvning kimyoviy formulasi qanday?", ["H2O", "CO2", "NaCl", "NH3"], 0, "easy"),
+            ("Mendeleyev jadvalidagi 1-element qaysi?", ["Geliy", "Vodorod", Kislorod", "Azot"], 1, "easy"),
+            ("Osh tuzining kimyoviy nomi nima?", ["Natriy xlorid", "Kaliy permanganat", "Kalsiy karbonat", "Mis sulfat"], 0, "easy"),
+            ("Atmosferada eng ko'p tarqalgan gaz qaysi?", ["Kislorod", "Azot", "Argon", "Uglerod angidrid"], 1, "medium"),
+            ("Kislota va ishqor reaksiyaga kirishganda nima hosil bo'ladi?", ["Tuz va suv", "Faqat tuz", "Faqat suv", "Gaz"], 0, "medium"),
+            ("Oddiy sharoitda suyuq holatda bo'ladigan yagona metall qaysi?", ["Temir", "Simob", "Oltin", "Rux"], 1, "medium"),
+            ("Sulfat kislotaning formulasi qanday?", ["HCl", "H2SO4", "HNO3", "H3PO4"], 1, "medium"),
+            ("Uglerodning allotropik shakl o'zgarishi qaysi?", ["Olmos va grafit", "Oltin va kumush", "Temir va cho'yan", "Kislorod va ozon"], 0, "hard"),
+            ("Kislotali yomg'irlarning paydo bo'lishiga asosiy sababchi qaysi gaz?", ["Azot oksid", "Oltingugurt dioksidi", "Metan", "Neon"], 1, "hard"),
+            ("Elektrolitik dissosilanish nazariyasini kim yaratgan?", ["Arrhenius", "Mendeleyev", "Lomonosov", "Butlerov"], 0, "hard")
         ]
     },
     "history": {
-        "title": "🏛 Tarix & Geografiya",
+        "title": "🏛 Tarix & Geografiya (DTM)",
         "questions": [
-            ("Amir Temur qaysi yilda tavallud topgan?", ["1336-yil", "1365-yil", "1405-yil", "1219-yil"], 0),
-            ("O'zbekistonning poytaxti qaysi shahar?", ["Samarqand", "Buxoro", "Toshkent", "Xiva"], 2),
-            ("Dunyodagi eng katta okean qaysi?", ["Tinch okeani", "Atlantika okeani", "Hind okeani", "Shimoliy Muz okeani"], 0),
-            ("Buyuk Ipak yo'li qaysi qit'alarni bog'lagan?", ["Osiyo va Yevropa", "Afrika va Amerika", "Avstraliya va Antarktida", "Faqat Osiyo"], 0),
-            ("Yer yuzidagi eng uzun daryo qaysi?", ["Nil", "Amazonka", "Sirdaryo", "Amudaryo"], 0),
-            ("Alisher Navoiy qaysi asrda yashab ijod qilgan?", ["XV asr", "XIV asr", "XVI asr", "XII asr"], 0),
-            ("Fransiyaning poytaxti qaysi shahar?", ["Berlin", "Parij", "Madrid", "Rim"], 1),
-            ("Dunyodagi eng baland tog' cho'qqisi qaysi?", ["Everest", "Elbrus", "Kilimanjaro", "Chimyon"], 0),
-            ("Boburiylar sulolasining asoschisi kim?", ["Zahiriddin Muhammad Bobur", "Amir Temur", "Mirzo Ulug'bek", "Temur Malik"], 0),
-            ("Yer yuzida nechta okean bor?", ["4 ta", "5 ta", "6 ta", "3 ta"], 1)
+            ("Amir Temur qaysi yilda tavallud topgan?", ["1336-yil", "1365-yil", "1405-yil", "1219-yil"], 0, "easy"),
+            ("O'zbekistonning poytaxti qaysi shahar?", ["Samarqand", "Buxoro", "Toshkent", "Xiva"], 2, "easy"),
+            ("Dunyodagi eng katta okean qaysi?", ["Tinch okeani", "Atlantika okeani", "Hind okeani", "Shimoliy Muz okeani"], 0, "easy"),
+            ("Buyuk Ipak yo'li qaysi qit'alarni bog'lagan?", ["Osiyo va Yevropa", "Afrika va Amerika", "Avstraliya va Antarktida", "Faqat Osiyo"], 0, "medium"),
+            ("Yer yuzidagi eng uzun daryo qaysi?", ["Nil", "Amazonka", "Sirdaryo", "Amudaryo"], 0, "medium"),
+            ("Alisher Navoiy qaysi asrda yashab ijod qilgan?", ["XV asr", "XIV asr", "XVI asr", "XII asr"], 0, "medium"),
+            ("Fransiyaning poytaxti qaysi shahar?", ["Berlin", "Parij", "Madrid", "Rim"], 1, "medium"),
+            ("Dunyodagi eng baland tog' cho'qqisi qaysi?", ["Everest", "Elbrus", "Kilimanjaro", "Chimyon"], 0, "hard"),
+            ("Boburiylar sulolasining asoschisi kim?", ["Zahiriddin Muhammad Bobur", "Amir Temur", "Mirzo Ulug'bek", "Temur Malik"], 0, "hard"),
+            ("Yer yuzida nechta okean bor?", ["4 ta", "5 ta", "6 ta", "3 ta"], 1, "hard")
         ]
     }
 }
@@ -127,7 +157,7 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
         if referrer_id in users_db and referrer_id != user_id:
             if not any(u["id"] == user_id for u in users_db[referrer_id]["referred_users"]):
                 users_db[referrer_id]["referred_users"].append({"id": user_id, "name": user_name})
-                users_db[referrer_id]["referrals_count"] += 3  # Har bir referal 3 ta ball olib keladi
+                users_db[referrer_id]["referrals_count"] += 3
                 users_db[referrer_id]["score"] += 3
                 users_db[referrer_id]["money"] += 10000
                 
@@ -220,7 +250,6 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     text = (
         f"✨ **Salom, {html.bold(user_name)}!**\n\n"
         f"🎯 **«Bilag'on Quiz»** botiga xush kelibsiz!\n\n"
-        f"🔥 **Combo Tizimi:** Ketma-ket to'g'ri topganingiz sari mukofot oshib boradi (2,000 so'mdan 5,000+ so'mgacha!) 🚀\n\n"
         f"⬇️ Quyidagi menyudan kerakli bo'limni tanlang:"
     )
     await message.answer(text, reply_markup=get_reply_keyboard())
@@ -233,7 +262,7 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
     
     is_member = await check_user_subscription(callback.bot, user_id)
     if not is_member:
-        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz yoki so'rov yubormadingiz!", show_alert=True)
+        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz!", show_alert=True)
         return
 
     approved_users.add(user_id)
@@ -280,14 +309,10 @@ async def text_select_category(message: Message, state: FSMContext) -> None:
         await message.answer("⚠ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
         return
 
-    # 24 soat yoki 3 ta do'st qo'shish sharti
     last_time = u_data.get("last_quiz_time")
     if last_time:
         diff_hours = (datetime.datetime.now() - last_time).total_seconds() / 3600
         if diff_hours < 24:
-            refs = u_data.get("referrals_count", 0)
-            # Har 1 ta do'st 3 ball bergani uchun, 3 ta do'st = 9 ball yoki shunchaki referrals_count tekshiriladi
-            # Talab bo'yicha: qayta bajarish uchun 3 ta do'st qo'shish kerak yoki 24 soat kutilishi kerak
             await message.answer(
                 f"⏳ Siz oxirgi testni 24 soat ichida yechgansiz!\n"
                 f"🔄 Testni qaytadan boshlash uchun **3 ta do'st** qo'shishingiz kerak yoki 24 soat kutishingiz lozim."
@@ -298,7 +323,7 @@ async def text_select_category(message: Message, state: FSMContext) -> None:
     for cat_key, cat_val in CATEGORIES_DB.items():
         keyboard_buttons.append([InlineKeyboardButton(text=cat_val["title"], callback_data=f"cat_{cat_key}")])
     
-    text = "📚 **Test yo'nalishini tanlang:**"
+    text = "📚 **DTM test yo'nalishini tanlang:**"
     await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
 
 
@@ -327,7 +352,6 @@ async def send_quiz_question(message: Message, user_id: int):
     questions = u_data["game_questions"]
     
     if q_idx >= len(questions):
-        # O'yin tugadi (10 ta test)
         corrects = u_data.get("correct_count", 0)
         u_data["in_game"] = False
         u_data["last_quiz_time"] = datetime.datetime.now()
@@ -335,24 +359,27 @@ async def send_quiz_question(message: Message, user_id: int):
         if corrects >= 10:
             u_data["score"] += 5
             await message.answer(
-                f"🎉 **Tabriklaymiz! Siz 10 ta testning barchasiga to'g'ri javob berdingiz!**\n"
+                f"🎉 **Tabriklaymiz! Siz 10 ta DTM testining barchasiga to'g'ri javob berdingiz!**\n"
                 f"🎁 Hisobingizga **+5 ball** qo'shildi! 🚀"
             )
         else:
             await message.answer(
                 f"🏁 **Test yakunlandi!**\n"
                 f"📊 To'g'ri javoblar: {corrects}/10\n"
-                f"💡 5 ball olish uchun 10 ta savolning barchasiga to'g'ri topishingiz kerak edi."
+                f"💡 5 ball olish uchun 10 ta savolning barchasiga to'g'ri topishingiz kerak."
             )
         return
 
-    q_text, options, correct_opt = questions[q_idx]
+    q_text, options, correct_opt, level = questions[q_idx]
+    
+    level_icon = "🟢 Easy" if level == "easy" else ("🟡 Medium" if level == "medium" else "🔴 Hard")
+    
     keyboard_buttons = []
     for idx, opt in enumerate(options):
         keyboard_buttons.append([InlineKeyboardButton(text=opt, callback_data=f"ans_{idx}_{correct_opt}")])
         
     await message.answer(
-        f"📝 **Savol {q_idx + 1}/10:**\n\n{q_text}",
+        f"📝 **Savol {q_idx + 1}/10** | Daraja: {level_icon}\n\n{q_text}",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
     )
 
@@ -365,10 +392,7 @@ async def handle_quiz_answer(callback: CallbackQuery, state: FSMContext) -> None
         return
         
     _, chosen, correct = callback.data.split("_")
-    chosen_idx = int(chosen)
-    correct_idx = int(correct)
-    
-    if chosen_idx == correct_idx:
+    if int(chosen) == int(correct):
         users_db[user_id]["correct_count"] = users_db[user_id].get("correct_count", 0) + 1
         await callback.answer("✅ To'g'ri!")
     else:
@@ -518,7 +542,6 @@ async def text_contest_info(message: Message, state: FSMContext) -> None:
         )
         
         total_contestants = len(contestants)
-        
         user_rank = 33
         for idx, c in enumerate(contestants, 1):
             if c.get("name") == u_data.get("name"):
@@ -529,11 +552,10 @@ async def text_contest_info(message: Message, state: FSMContext) -> None:
         top_1_refs = contestants[0].get("referrals_count", 52) if contestants else 52
         
         text += (
-            f"🎉 **Tabriklaymiz, {u_data.get('name')}! Siz konkursga muvaffaqiyatli qo'shildingiz!**\n\n"
+            f"🎉 **Tabriklaymiz, {u_data.get('name')}! Siz konkurs a'zosisiz!**\n\n"
             f"👥 Jami konkurs a'zolari: **{total_contestants} ta**\n"
-            f"📊 Sizning hozirgi o'rningiz: **{user_rank}-o'rin**\n"
-            f"🥇 1-o'rinda: **{top_1_name}** ({top_1_refs} ta referal / ball bilan turibdi)\n\n"
-            f"💡 *1 ta do'st qo'shish orqali yuqoriroq o'ringa o'tasiz!*\n"
+            f"📊 Sizning o'rningiz: **{user_rank}-o'rin**\n"
+            f"🥇 1-o'rinda: **{top_1_name}** ({top_1_refs} ta referal / ball)\n"
         )
     else:
         text += "❌ **Siz hali konkursga qo'shilmagansiz!** Qo'shilish uchun pastdagi tugmani bosing:"
@@ -592,12 +614,11 @@ async def process_contest_surname(message: Message, state: FSMContext) -> None:
     top_1_refs = contestants[0].get("referrals_count", 52) if contestants else 52
     
     success_text = (
-        f"🎉 **Tabriklaymiz, {full_contestant_name}! Siz konkursga muvaffaqiyatli qo'shildingiz!**\n\n"
+        f"🎉 **Tabriklaymiz, {full_contestant_name}! Siz konkursga qo'shildingiz!**\n\n"
         f"👥 Jami konkurs a'zolari: **{total_contestants} ta**\n"
-        f"📊 Sizning hozirgi o'rningiz: **{user_rank}-o'rin** *(33-bo'ldingiz, 1 ta do'st qo'shish orqali yuqoriroq o'ringa o'tasiz)*\n"
-        f"🥇 1-o'rinda: **{top_1_name}** ({top_1_refs} ta referal bilan turibdi)\n\n"
-        f"🔗 **Sizning shaxsiy referal havolangiz:**\n`{ref_link}`\n\n"
-        f"👇 Do'stlaringizni taklif qiling va 1-o'ringa chiqib 300,000 so'mni yutib oling!"
+        f"📊 Sizning hozirgi o'rningiz: **{user_rank}-o'rin**\n"
+        f"🥇 1-o'rinda: **{top_1_name}** ({top_1_refs} ta referal)\n\n"
+        f"🔗 **Sizning shaxsiy referal havolangiz:**\n`{ref_link}`\n"
     )
     await message.answer(success_text, reply_markup=get_reply_keyboard())
 
@@ -606,7 +627,7 @@ async def process_contest_surname(message: Message, state: FSMContext) -> None:
 async def text_rules(message: Message, state: FSMContext) -> None:
     text = (
         f"📜 **O'yin Qoidalari:**\n\n"
-        f"1. Viktorina savollariga to'g'ri javob bering (10 ta test to'g'ri topilsa +5 ball beriladi).\n"
+        f"1. DTM testlariga to'g'ri javob bering (10 ta test to'g'ri topilsa +5 ball).\n"
         f"2. Testni qayta ishlash uchun 3 ta do'st qo'shish kerak yoki 24 soat kutish lozim.\n"
         f"3. Referal orqali har bir do'st uchun +3 ball va 10,000 so'm beriladi.\n"
         f"4. Konkursda g'olib bo'lish uchun eng ko'p odam taklif qiling!"
@@ -626,18 +647,13 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
         text = (
             f"❌ **Mablag'ni yechib olish imkonsiz!**\n\n"
             f"⚠️ Pulni yechib olish uchun hisobingizda kamida **50 ball** bo'lishi kerak!\n"
-            f"📊 Hozirgi ballingiz: **{score} ta ball** (Yana {needed_more} ball kerak)\n\n"
-            f"💡 *Viktorina o'ynang va do'stlar taklif qiling!*"
+            f"📊 Hozirgi ballingiz: **{score} ta ball** (Yana {needed_more} ball kerak)\n"
         )
         await callback.message.answer(text)
         return
 
     await state.set_state(WithdrawStates.waiting_for_name)
-    text = (
-        f"✅ **Tabriklaymiz! Ballingiz yetarli ({score} ball).**\n\n"
-        f"📝 Pulni o'tkazib berishimiz uchun iltimos, **Ism va Familiyangizni** kiriting:"
-    )
-    await callback.message.answer(text)
+    await callback.message.answer("📝 Pulni o'tkazib berishimiz uchun iltimos, **Ism va Familiyangizni** kiriting:")
 
 
 @dp.message(WithdrawStates.waiting_for_name)
@@ -677,13 +693,7 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
     except Exception as e:
         logging.error(f"Adminga yuborishda xatolik: {e}")
         
-    await message.answer(
-        f"🎉 **So'rovingiz muvaffaqiyatli qabul qilindi!**\n\n"
-        f"Ism: {fullname}\n"
-        f"Karta: {card_info}\n"
-        f"Summa: {withdrawn_amount:,} so'm\n\n"
-        f"⏳ Adminlar tez orada ma'lumotlarni tekshirib, mablag'ni kartangizga o'tkazib berishadi!"
-    )
+    await message.answer(f"🎉 **So'rovingiz qabul qilindi!** Adminlar tez orada ko'rib chiqishadi.")
 
 
 @dp.message(Command("admin"))
@@ -706,8 +716,6 @@ async def admin_panel_handler(message: Message) -> None:
     for idx, c in enumerate(contestants[:15], 1):
         contestants_list_text += f"{idx}. {c.get('name')} — {c.get('referrals_count')} ball/referal\n"
         
-    real_users_count = sum(1 for uid in users_db.keys() if not str(uid).startswith("bot_"))
-    
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📢 Xabar Tarqatish", callback_data="admin_broadcast")],
         [InlineKeyboardButton(text="➕ / ➖ Balansni O'zgartirish", callback_data="admin_change_score")]
@@ -717,7 +725,6 @@ async def admin_panel_handler(message: Message) -> None:
         f"👑 **Admin Panel & Konkurs Ishtirokchilari**\n\n"
         f"👥 Jami ishtirokchilar: **{len(contestants)} ta**\n"
         f"📊 **Top Ishtirokchilar va Ballari:**\n{contestants_list_text}\n"
-        f"Kerakli amalni tanlang:"
     )
     await message.answer(text, reply_markup=keyboard)
 
@@ -740,14 +747,14 @@ async def process_admin_user_id(message: Message, state: FSMContext) -> None:
     try:
         target_id = int(message.text.strip())
         if target_id not in users_db:
-            await message.answer("❌ Bunday ID raqamidagi foydalanuvchi topilmadi! Qaytadan ID yuboring:")
+            await message.answer("❌ Foydalanuvchi topilmadi! Qaytadan ID yuboring:")
             return
         await state.update_data(target_user_id=target_id)
         await state.set_state(AdminScoreStates.waiting_for_score_amount)
         current_money = users_db[target_id]["money"]
-        await message.answer(f"👤 Foydalanuvchi topildi. Hozirgi puli: **{current_money:,} so'm**\n\nQo'shiladigan pul miqdorini so'mda yuboring:")
+        await message.answer(f"👤 Topildi. Hozirgi puli: **{current_money:,} so'm**\n\nQo'shiladigan pul miqdorini yuboring:")
     except ValueError:
-        await message.answer("❌ Noto'g'ri ID format! Faqat raqam yuboring:")
+        await message.answer("❌ Noto'g'ri ID format!")
 
 
 @dp.message(AdminScoreStates.waiting_for_score_amount)
@@ -761,9 +768,9 @@ async def process_admin_score_amount(message: Message, state: FSMContext) -> Non
         users_db[target_id]["money"] += amount
         new_money = users_db[target_id]["money"]
         
-        await message.answer(f"✅ Muvaffaqiyatli o'zgartirildi!\nFoydalanuvchi ID: `{target_id}`\nYangi puli: **{new_money:,} so'm**")
+        await message.answer(f"✅ Muvaffaqiyatli! Yangi puli: **{new_money:,} so'm**")
     except ValueError:
-        await message.answer("❌ Noto'g'ri qiymat! Faqat butun son yuboring:")
+        await message.answer("❌ Noto'g'ri qiymat!")
 
 
 @dp.callback_query(F.data == "admin_broadcast")
@@ -776,7 +783,7 @@ async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext) -> N
         return
         
     await state.set_state(BroadcastStates.waiting_for_broadcast_message)
-    await callback.message.answer("📢 Barcha foydalanuvchilarga yubormoqchi bo'lgan **xabaringizni** yuboring:")
+    await callback.message.answer("📢 Barcha foydalanuvchilarga yubormoqchi bo'lgan xabaringizni yuboring:")
 
 
 @dp.message(BroadcastStates.waiting_for_broadcast_message)
@@ -797,11 +804,7 @@ async def process_broadcast(message: Message, state: FSMContext) -> None:
         except:
             failed += 1
             
-    await status_msg.edit_text(
-        f"✅ **Xabar tarqatish yakunlandi!**\n\n"
-        f"📤 Muvaffaqiyatli yuborildi: **{success} ta**\n"
-        f"❌ Xatolik (bloklaganlar): **{failed} ta**"
-    )
+    await status_msg.edit_text(f"✅ Tarqatildi: {success} ta, Xatolik: {failed} ta")
 
 
 async def main() -> None:
