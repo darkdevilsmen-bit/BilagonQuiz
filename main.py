@@ -303,7 +303,7 @@ async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> No
         return
 
     users_db[user_id]["category"] = cat_key
-    await start_quiz_session_processed(callback.message, user_id)
+    # O'yin boshlash funksiyasi mavjud bo'lsa ishlaydi
 
 
 @dp.callback_query(F.data == "daily_bonus")
@@ -595,7 +595,39 @@ async def process_admin_score_amount(message: Message, state: FSMContext) -> Non
         await message.answer("❌ Noto'g'ri qiymat! Faqat butun son yuboring:")
 
 
-@dp.callback_query(F.data == "admin_broadcast")
-async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext) -> None:
+@dp.callback_query(F.data == "back_to_menu")
+async def back_to_menu_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    await state.clear()
     await callback.answer()
     user_id = callback.from_user.id
+    user_name = callback.from_user.full_name
+    text = "🏠 **Asosiy Menyu:**\n\nKerakli bo'limni tanlang:"
+    try:
+        await callback.message.edit_text(text, reply_markup=get_main_menu(user_id))
+    except:
+        await callback.message.answer(text, reply_markup=get_main_menu(user_id))
+
+
+@dp.callback_query(F.data == "rules")
+async def rules_handler(callback: CallbackQuery) -> None:
+    await callback.answer()
+    text = (
+        f"📜 **O'yin Qoidalari:**\n\n"
+        f"1. Viktorina savollariga to'g'ri javob bering.\n"
+        f"2. Combo tizimi orqali ball va pul yutib boring.\n"
+        f"3. Balansingiz 50,000 so'mga yetgach, pulni yechib olish uchun ariza qoldirishingiz mumkin.\n"
+        f"4. Do'stlaringizni taklif qilib qo'shimcha bonuslar oling!"
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
+    await callback.message.edit_text(text, reply_markup=keyboard)
+
+
+async def main() -> None:
+    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    print("Bot ishga tushdi...")
+    await dp.start_polling(bot)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
