@@ -61,7 +61,7 @@ class AdminScoreStates(StatesGroup):
     waiting_for_score_amount = State()
 
 
-# DTM savollari: Easy, Medium, Hard darajalari bilan (Mantiq, IT, Tarix, Biologiya, Kimyo)
+# DTM savollari: Easy, Medium, Hard darajalari bilan
 CATEGORIES_DB = {
     "logic": {
         "title": "🧠 Mantiqiy Savollar (DTM)",
@@ -112,7 +112,7 @@ CATEGORIES_DB = {
         "title": "🧪 Kimyo (DTM)",
         "questions": [
             ("Suvning kimyoviy formulasi qanday?", ["H2O", "CO2", "NaCl", "NH3"], 0, "easy"),
-            ("Mendeleyev jadvalidagi 1-element qaysi?", ["Geliy", "Vodorod", Kislorod", "Azot"], 1, "easy"),
+            ("Mendeleyev jadvalidagi 1-element qaysi?", ["Geliy", "Vodorod", "Kislorod", "Azot"], 1, "easy"),
             ("Osh tuzining kimyoviy nomi nima?", ["Natriy xlorid", "Kaliy permanganat", "Kalsiy karbonat", "Mis sulfat"], 0, "easy"),
             ("Atmosferada eng ko'p tarqalgan gaz qaysi?", ["Kislorod", "Azot", "Argon", "Uglerod angidrid"], 1, "medium"),
             ("Kislota va ishqor reaksiyaga kirishganda nima hosil bo'ladi?", ["Tuz va suv", "Faqat tuz", "Faqat suv", "Gaz"], 0, "medium"),
@@ -155,7 +155,7 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
     if user_id in pending_referrals:
         referrer_id = pending_referrals[user_id]
         if referrer_id in users_db and referrer_id != user_id:
-            if not any(u["id"] == user_id for u in users_db[referrer_id]["referred_users"]):
+            if not any(u.get("id") == user_id for u in users_db[referrer_id].get("referred_users", [])):
                 users_db[referrer_id]["referred_users"].append({"id": user_id, "name": user_name})
                 users_db[referrer_id]["referrals_count"] += 3
                 users_db[referrer_id]["score"] += 3
@@ -169,7 +169,7 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
                     )
                 except:
                     pass
-        del pending_referrals[user_id]
+        pending_referrals.pop(user_id, None)
 
 
 @dp.chat_join_request()
@@ -371,7 +371,6 @@ async def send_quiz_question(message: Message, user_id: int):
         return
 
     q_text, options, correct_opt, level = questions[q_idx]
-    
     level_icon = "🟢 Easy" if level == "easy" else ("🟡 Medium" if level == "medium" else "🔴 Hard")
     
     keyboard_buttons = []
@@ -809,6 +808,9 @@ async def process_broadcast(message: Message, state: FSMContext) -> None:
 
 async def main() -> None:
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    
+    # Eski kesh va ulanishlarni tozalash uchun webhookni o'chiramiz
+    await bot.delete_webhook(drop_pending_updates=True)
     
     await bot.set_my_commands([
         BotCommand(command="start", description="Botni qayta ishga tushirish / Asosiy menyu")
