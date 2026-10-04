@@ -1,4 +1,4 @@
-Import asyncio
+import asyncio
 import datetime
 import logging
 import random
@@ -126,7 +126,7 @@ async def handle_join_request(request: ChatJoinRequest) -> None:
     approved_users.add(user_id)
     user_name = request.from_user.full_name
     try:
-        # await request.approve()  # Avtomatik tasdiqlash o'chirildi
+        # await request.approve()  <-- Avtomatik tasdiqlash o'chirildi
         pass
     except:
         pass
@@ -424,7 +424,7 @@ async def show_balance(callback: CallbackQuery) -> None:
     
     keyboard_buttons = [
         [InlineKeyboardButton(text="💵 Pulni Yechib Olish", callback_data="withdraw_money")],
-        [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]
+        [InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]
     ]
     await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
 
