@@ -11,7 +11,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, KeyboardButton
 
-BOT_TOKEN = "8963661833:AAERa76qlzRiljTUXkqxFxeDEg6_MJKQ44k"
+BOT_TOKEN = "8963661833:AAGEKEuIxr5ADH0wITLGtMWD3z_ENGL3yX8"
 CHANNEL_ID = -1004317372728  # Sizning yopiq kanalingizning aniq ID raqami
 CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
 ADMIN_USERNAME = "manmode_admin2"
@@ -260,7 +260,6 @@ async def verify_access_middleware_msg(message: Message) -> bool:
     return True
 
 
-# Pastdagi matnli tugmalar uchun handlerlar
 @dp.message(F.text == "🚀 Viktorinani Boshlash")
 async def text_select_category(message: Message, state: FSMContext) -> None:
     if not await verify_access_middleware_msg(message):
@@ -608,8 +607,6 @@ async def process_broadcast(message: Message, state: FSMContext) -> None:
 
 async def main() -> None:
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    
-    # Ko'k menyu tugmalarini butunlay tozalash uchun bo'sh ro'yxat beramiz
     await bot.delete_my_commands()
     
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
