@@ -61,7 +61,7 @@ class AdminScoreStates(StatesGroup):
     waiting_for_score_amount = State()
 
 
-# Kengaytirilgan va qiyinlashtirilgan DTM savollari bazasi (Easy, Medium, Hard)
+# DTM savollari bazasi
 CATEGORIES_DB = {
     "logic": {
         "title": "🧠 Mantiqiy Savollar (DTM)",
@@ -261,7 +261,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     text = (
         f"✨ **Salom, {html.bold(user_name)}!**\n\n"
         f"🎯 **«Bilag'on Quiz»** botiga xush kelibsiz!\n\n"
-        f"⬇️️ Quyidagi menyudan kerakli bo'limni tanlang:"
+        f"⬇ Quyidagi menyudan kerakli bo'limni tanlang:"
     )
     await message.answer(text, reply_markup=get_reply_keyboard())
 
@@ -346,7 +346,6 @@ async def start_quiz_game(callback: CallbackQuery, state: FSMContext) -> None:
     if user_id not in users_db:
         users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
         
-    # Bazadan tasodifiy 10 ta savol tanlab olamiz
     questions = random.sample(CATEGORIES_DB[cat_key]["questions"], 10)
     users_db[user_id]["game_questions"] = questions
     users_db[user_id]["question_num"] = 0
@@ -480,17 +479,24 @@ async def text_daily_bonus(message: Message, state: FSMContext) -> None:
 async def text_top_board(message: Message, state: FSMContext) -> None:
     if not await verify_access_middleware_msg(message):
         return
-    sorted_users = sorted(users_db.items(), key=lambda x: (x[1].get("money", 0) + x[1].get("withdrawn", 0)), reverse=True)[:10]
     
-    text = "🏆 **Top 10 Liderlar Reytingi**\n📊 *(To'plagan ballar, jami pul va yechib olganlar)*\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
+    # To'g'rilandi: Reytingni ball (score) va jami pul bo'yicha to'g'ri saralash
+    sorted_users = sorted(
+        users_db.items(), 
+        key=lambda x: (x[1].get("score", 0), x[1].get("money", 0) + x[1].get("withdrawn", 0)), 
+        reverse=True
+    )[:10]
+    
+    text = "🏆 **Top 10 Liderlar Reytingi**\n📊 *(Ballar va pul mablag'lari bo'yicha)*\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
     for idx, (u_id, u_data) in enumerate(sorted_users, 1):
         name = u_data.get("name", "Foydalanuvchi")
         score = u_data.get("score", 0)
-        total_earned = u_data.get("money", 0) + u_data.get("withdrawn", 0)
+        money = u_data.get("money", 0)
         withdrawn = u_data.get("withdrawn", 0)
+        total_earned = money + withdrawn
         
         medal = "🥇" if idx == 1 else ("🥈" if idx == 2 else ("🥉" if idx == 3 else f"{idx}."))
-        text += f"{medal} **{name}**\n   🏆 {score} ball | 💰 Jami: {total_earned:,} so'm | 💸 Yechgan: {withdrawn:,} so'm\n\n"
+        text += f"{medal} **{name}**\n   🏆 Ball: {score} ta | 💰 Balans: {money:,} so'm (Jami: {total_earned:,} so'm)\n\n"
         
     await message.answer(text)
 
