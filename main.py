@@ -16,8 +16,8 @@ import os
 BOT_TOKEN = os.getenv("BOT")
 
 # 🛑 O'ZINGizning KANALINGIZ MA'LUMOTLARINI SHU YERGA YOZING:
-CHANNEL_ID = -100xxxxxxxxxx  # O'z kanalingizning ID raqami (masalan: -1001234567890)
-CHANNEL_LINK = "https://t.me/SizningKanalingiz"  # O'z kanalingiz havolasi
+CHANNEL_ID = -1004317372728  # O'z kanalingizning ID raqami (masalan: -1001234567890)
+CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"  # O'z kanalingiz havolasi
 
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 000000000
