@@ -11,7 +11,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand
 
-BOT_TOKEN = "8963661833:AAGEKEuIxr5ADH0wITLGtMWD3z_ENGL3yX8"
+BOT_TOKEN = "8933394511:AAGOuocar5_Fq1o0V9WVAt2hHmLeZo_qCW4"
 CHANNEL_ID = -1004317372728  # Yopiq kanal ID raqami
 CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
 ADMIN_USERNAME = "manmode_admin2"
