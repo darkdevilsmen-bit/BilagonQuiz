@@ -98,13 +98,13 @@ CATEGORIES_DB = {
     }
 }
 
-# Pastki matnli tugmalar (ReplyKeyboardMarkup)
+# Pastki matnli tugmalar (Konkurs qo'shildi, Admin olib tashlandi)
 def get_reply_keyboard() -> ReplyKeyboardMarkup:
     keyboard = [
         [KeyboardButton(text="🚀 Viktorinani Boshlash")],
         [KeyboardButton(text="💳 Balans"), KeyboardButton(text="🎁 Kunlik Bonus")],
         [KeyboardButton(text="🏆 Top Reyting"), KeyboardButton(text="🔗 Referal Tizimi")],
-        [KeyboardButton(text="📜 O'yin Qoidalari"), KeyboardButton(text="👨‍💻 Admin bilan bog'lanish")]
+        [KeyboardButton(text="🏆 Konkurs"), KeyboardButton(text="📜 O'yin Qoidalari")]
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
@@ -116,14 +116,14 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
             if not any(u["id"] == user_id for u in users_db[referrer_id]["referred_users"]):
                 users_db[referrer_id]["referred_users"].append({"id": user_id, "name": user_name})
                 users_db[referrer_id]["referrals_count"] += 1
-                users_db[referrer_id]["score"] += 5
+                users_db[referrer_id]["score"] += 1  # Har bir taklif qilingan odam uchun +1 ball
                 users_db[referrer_id]["money"] += 10000
                 
                 try:
                     await bot.send_message(
                         referrer_id,
-                        f"🎉 **Ajoyib yangilik!** Siz taklif qilgan do'stingiz (**{user_name}**) kanalimizga qo'shildi!\n"
-                        f"🎁 Hisobingizga **+5 ball** va **+10,000 so'm** qo'shildi! 🚀"
+                        f"🎉 **Ajoyib yangilik!** Siz orqali foydalanuvchi (**{user_name}**) qo'shildi!\n"
+                        f"🎁 Sizga **+1 ball** qo'shildi va hisobingiz yangilandi! 🚀"
                     )
                 except:
                     pass
@@ -377,9 +377,30 @@ async def text_referral_info(message: Message, state: FSMContext) -> None:
     text = (
         f"🔗 **Sizning Shaxsiy Referal Tizimingiz**\n\n"
         f"👥 Taklif qilgan do'stlarim: **{refs} ta**\n"
-        f"🎁 Har bir do'st uchun: **+5 ball va +10,000 so'm** beriladi!\n"
+        f"🎁 Har bir do'st uchun: **+1 ball va +10,000 so'm** beriladi!\n"
         f"{list_text}\n"
         f"📋 **Sizning taklif havolangiz:**\n`{ref_link}`\n"
+    )
+    await message.answer(text)
+
+
+@dp.message(F.text == "🏆 Konkurs")
+async def text_contest_info(message: Message, state: FSMContext) -> None:
+    if not await verify_access_middleware_msg(message):
+        return
+    user_id = message.from_user.id
+    bot_username = (await message.bot.get_me()).username
+    ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
+    refs = users_db.get(user_id, {}).get("referrals_count", 0)
+    
+    text = (
+        f"🏆 **Katta Konkurs!**\n\n"
+        f"🎁 Konkurs sovrini: **300,000 so'm!**\n"
+        f"📌 **Shartlar:** Eng ko'p do'stlarini (odam) taklif qilgan ishtirokchi konkurs g'olibi bo'ladi va 300,000 so'm pul mukofotini qo'lga kiritadi!\n\n"
+        f"👥 Siz taklif qilgan do'stlar soni: **{refs} ta**\n\n"
+        f"🔗 **Sizning shaxsiy konkurs (referal) havolangiz:**\n"
+        f"`{ref_link}`\n\n"
+        f"👇 *Shu havolani do'stlaringizga tarqating va ko'proq odam qo'shib g'olib bo'ling!*"
     )
     await message.answer(text)
 
@@ -391,14 +412,9 @@ async def text_rules(message: Message, state: FSMContext) -> None:
         f"1. Viktorina savollariga to'g'ri javob bering.\n"
         f"2. Combo tizimi orqali ball va pul yutib boring.\n"
         f"3. Balansingizda kamida 50 ball yig'ilgach, pulni yechib olish uchun ariza qoldirishingiz mumkin.\n"
-        f"4. Do'stlaringizni taklif qilib qo'shimcha bonuslar oling!"
+        f"4. Konkursda g'olib bo'lish uchun eng ko'p odam taklif qiling!"
     )
     await message.answer(text)
-
-
-@dp.message(F.text == "👨‍💻 Admin bilan bog'lanish")
-async def text_contact_admin(message: Message, state: FSMContext) -> None:
-    await message.answer(f"👨‍💻 Savollar bo'yicha adminga murojaat qiling: @{ADMIN_USERNAME}")
 
 
 @dp.callback_query(F.data.startswith("cat_"))
