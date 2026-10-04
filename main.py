@@ -12,22 +12,22 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand
 
 BOT_TOKEN = "8963661833:AAGEKEuIxr5ADH0wITLGtMWD3z_ENGL3yX8"
-CHANNEL_ID = -1004317372728  # Sizning yopiq kanalingizning aniq ID raqami
+CHANNEL_ID = -1004317372728  # Yopiq kanal ID raqami
 CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 000000000
 
 dp = Dispatcher()
 
-# 33 ta ishtirokchidan iborat boshlang'ich konkurs bazasi
+# Dastlabki ishtirokchilar bazasi (Ism va raqamlar aniq ko'rinishi uchun to'g'irlandi)
 users_db = {
-    "bot_1": {"score": 156, "money": 450000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 52, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
-    "bot_2": {"score": 141, "money": 400000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 47, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
-    "bot_3": {"score": 120, "money": 350000, "withdrawn": 100000, "name": "Dilshod Olimov", "referrals_count": 40, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
+    1001: {"score": 156, "money": 450000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 52, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
+    1002: {"score": 141, "money": 400000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 47, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
+    1003: {"score": 120, "money": 350000, "withdrawn": 100000, "name": "Dilshod Olimov", "referrals_count": 40, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
 }
 
 for i in range(4, 34):
-    users_db[f"bot_{i}"] = {
+    users_db[1000 + i] = {
         "score": random.randint(10, 90),
         "money": random.randint(20000, 180000),
         "withdrawn": 0,
@@ -61,7 +61,6 @@ class AdminScoreStates(StatesGroup):
     waiting_for_score_amount = State()
 
 
-# DTM savollari bazasi
 CATEGORIES_DB = {
     "logic": {
         "title": "🧠 Mantiqiy Savollar (DTM)",
@@ -480,15 +479,15 @@ async def text_top_board(message: Message, state: FSMContext) -> None:
     if not await verify_access_middleware_msg(message):
         return
     
-    # To'g'rilandi: Reytingni ball (score) va jami pul bo'yicha to'g'ri saralash
+    # To'g'rilangan tartiblash: Bal va umumiy mablag' bo'yicha to'g'ri ko'rsatish
     sorted_users = sorted(
-        users_db.items(), 
-        key=lambda x: (x[1].get("score", 0), x[1].get("money", 0) + x[1].get("withdrawn", 0)), 
+        users_db.values(), 
+        key=lambda x: (x.get("score", 0), x.get("money", 0) + x.get("withdrawn", 0)), 
         reverse=True
     )[:10]
     
-    text = "🏆 **Top 10 Liderlar Reytingi**\n📊 *(Ballar va pul mablag'lari bo'yicha)*\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
-    for idx, (u_id, u_data) in enumerate(sorted_users, 1):
+    text = "🏆 **Top 10 Liderlar Reytingi**\n📊 *(Ballar va umumiy balans bo'yicha)*\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
+    for idx, u_data in enumerate(sorted_users, 1):
         name = u_data.get("name", "Foydalanuvchi")
         score = u_data.get("score", 0)
         money = u_data.get("money", 0)
@@ -496,7 +495,7 @@ async def text_top_board(message: Message, state: FSMContext) -> None:
         total_earned = money + withdrawn
         
         medal = "🥇" if idx == 1 else ("🥈" if idx == 2 else ("🥉" if idx == 3 else f"{idx}."))
-        text += f"{medal} **{name}**\n   🏆 Ball: {score} ta | 💰 Balans: {money:,} so'm (Jami: {total_earned:,} so'm)\n\n"
+        text += f"{medal} **{name}**\n   🏆 Ball: {score} | 💰 Pul: {total_earned:,} so'm\n\n"
         
     await message.answer(text)
 
@@ -812,7 +811,7 @@ async def process_broadcast(message: Message, state: FSMContext) -> None:
     status_msg = await message.answer("📤 Xabar tarqatish boshlandi...")
     
     for uid in users_db.keys():
-        if str(uid).startswith("bot_"):
+        if isinstance(uid, str) or uid < 1000:
             continue
         try:
             await message.send_copy(chat_id=int(uid))
@@ -830,7 +829,7 @@ async def main() -> None:
     await bot.delete_webhook(drop_pending_updates=True)
     
     await bot.set_my_commands([
-        BotCommand(command="start", description="Botni qayta ishga tushirish / Asosiy menyu")
+        BotCommand(command="start", description="Qaytadan ishga tushirish / Asosiy menyu")
     ])
     
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
