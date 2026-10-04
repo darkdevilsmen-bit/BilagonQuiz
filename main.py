@@ -15,7 +15,7 @@ import os
 # Yangi token o'rnatildi
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAHUEUDY9Rj9pNS9h8jh-RACpKH_LGtxgHY")
 
-# Kanal sozlamalari (Faqat bitta kanal)
+# Kanal sozlamalari
 REQUIRED_CHANNEL = "@Auto_Captions"
 CHANNEL_ID = -1004317372728  # Yopiq kanal ID raqami
 CHANNEL_LINK = "https://t.me/Auto_Captions"
@@ -200,6 +200,7 @@ async def check_user_subscription(bot: Bot, user_id: int) -> bool:
     if user_id in approved_users:
         return True
         
+    # 1-usul: ID orqali tekshirish
     try:
         member = await bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
         if member.status in ["member", "administrator", "creator", "restricted"]:
@@ -207,6 +208,16 @@ async def check_user_subscription(bot: Bot, user_id: int) -> bool:
             return True
     except Exception:
         pass
+
+    # 2-usul: Username (@Auto_Captions) orqali tekshirish
+    try:
+        member = await bot.get_chat_member(chat_id=REQUIRED_CHANNEL, user_id=user_id)
+        if member.status in ["member", "administrator", "creator", "restricted"]:
+            approved_users.add(user_id)
+            return True
+    except Exception:
+        pass
+
     return False
 
 
@@ -239,12 +250,12 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         text = (
             f"✨ **Salom, {html.bold(user_name)}!**\n\n"
-            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n"
+            f"📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling yoki so'rov yuboring:\n\n"
             f"👇 Tugmani bosing, so'ngra **'Obunani Tekshirish'** tugmasini bosing:"
         )
         await message.answer(text, reply_markup=keyboard)
@@ -292,7 +303,7 @@ async def verify_access_middleware_msg(message: Message) -> bool:
     is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
         await message.answer(
