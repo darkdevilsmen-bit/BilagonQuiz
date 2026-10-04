@@ -9,11 +9,11 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, BotCommand
+from aiogram.types import CallbackQuery, ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, KeyboardButton
 
 BOT_TOKEN = "8963661833:AAERa76qlzRiljTUXkqxFxeDEg6_MJKQ44k"
 CHANNEL_ID = -1004317372728  # Sizning yopiq kanalingizning aniq ID raqami
-CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"  # Faqat sizning havolangiz
+CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 000000000
 
@@ -98,6 +98,16 @@ CATEGORIES_DB = {
     }
 }
 
+# Pastki matnli tugmalar (ReplyKeyboardMarkup)
+def get_reply_keyboard() -> ReplyKeyboardMarkup:
+    keyboard = [
+        [KeyboardButton(text="🚀 Viktorinani Boshlash")],
+        [KeyboardButton(text="💳 Balans"), KeyboardButton(text="🎁 Kunlik Bonus")],
+        [KeyboardButton(text="🏆 Top Reyting"), KeyboardButton(text="🔗 Referal Tizimi")],
+        [KeyboardButton(text="📜 O'yin Qoidalari"), KeyboardButton(text="👨‍💻 Admin bilan bog'lanish")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
 
 async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
     if user_id in pending_referrals:
@@ -144,18 +154,6 @@ async def check_user_subscription(bot: Bot, user_id: int) -> bool:
     except Exception:
         pass
     return False
-
-
-def get_main_menu(user_id: int) -> InlineKeyboardMarkup:
-    keyboard = [
-        [InlineKeyboardButton(text="🚀 Viktorinani Boshlash", callback_data="select_category")],
-        [InlineKeyboardButton(text="🎁 Kunlik Bonus", callback_data="daily_bonus")],
-        [InlineKeyboardButton(text="🏆 Top Reyting (Liderlar)", callback_data="top_board")],
-        [InlineKeyboardButton(text="💎 Mening Balansim & Kabinet", callback_data="my_balance")],
-        [InlineKeyboardButton(text="🔗 Referal Tizimi", callback_data="referral_info")],
-        [InlineKeyboardButton(text="📜 O'yin Qoidalari", callback_data="rules")]
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
 @dp.message(CommandStart())
@@ -215,7 +213,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         f"🔥 **Combo Tizimi:** Ketma-ket to'g'ri topganingiz sari mukofot oshib boradi (2,000 so'mdan 5,000+ so'mgacha!) 🚀\n\n"
         f"⬇️ Quyidagi menyudan kerakli bo'limni tanlang:"
     )
-    await message.answer(text, reply_markup=get_main_menu(user_id))
+    await message.answer(text, reply_markup=get_reply_keyboard())
 
 
 @dp.callback_query(F.data == "check_joined")
@@ -243,85 +241,90 @@ async def check_joined_callback(callback: CallbackQuery, state: FSMContext) -> N
         f"🔥 **Combo Tizimi:** Ketma-ket to'g'ri topganingiz sari mukofot oshib boradi (2,000 so'mdan 5,000+ so'mgacha!) 🚀\n\n"
         f"⬇️ Quyidagi menyudan kerakli bo'limni tanlang:"
     )
-    await callback.message.answer(text, reply_markup=get_main_menu(user_id))
+    await callback.message.answer(text, reply_markup=get_reply_keyboard())
 
 
-async def verify_access_middleware(callback: CallbackQuery) -> bool:
-    user_id = callback.from_user.id
-    is_member = await check_user_subscription(callback.bot, user_id)
+async def verify_access_middleware_msg(message: Message) -> bool:
+    user_id = message.from_user.id
+    is_member = await check_user_subscription(message.bot, user_id)
     if not is_member:
-        await callback.answer("❌ Botdan foydalanish uchun avval kanalimizga a'zo bo'lishingiz kerak!", show_alert=True)
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish / So'rov Yuborish", url=CHANNEL_LINK)],
             [InlineKeyboardButton(text="✅ Obunani Tekshirish", callback_data="check_joined")]
         ])
-        try:
-            await callback.message.edit_text(
-                "📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n👇 Tugmani bosing:",
-                reply_markup=keyboard
-            )
-        except:
-            pass
+        await message.answer(
+            "📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:\n\n👇 Tugmani bosing:",
+            reply_markup=keyboard
+        )
         return False
     return True
 
 
-@dp.callback_query(F.data == "select_category")
-async def select_category_handler(callback: CallbackQuery) -> None:
-    if not await verify_access_middleware(callback):
+# Pastdagi matnli tugmalar uchun handlerlar
+@dp.message(F.text == "🚀 Viktorinani Boshlash")
+async def text_select_category(message: Message, state: FSMContext) -> None:
+    if not await verify_access_middleware_msg(message):
         return
-    await callback.answer()
-    user_id = callback.from_user.id
-    
+    user_id = message.from_user.id
     if user_id in users_db and users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
+        await message.answer("⚠ Sizda hozir faol o'yin ketmoqda! Avval uni oxirigacha tugating 🛑")
         return
 
     keyboard_buttons = []
     for cat_key, cat_val in CATEGORIES_DB.items():
         keyboard_buttons.append([InlineKeyboardButton(text=cat_val["title"], callback_data=f"cat_{cat_key}")])
-    keyboard_buttons.append([InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")])
     
     text = "📚 **Test yo'nalishini tanlang:**"
-    await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
+    await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
 
 
-@dp.callback_query(F.data.startswith("cat_"))
-async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> None:
-    if not await verify_access_middleware(callback):
+@dp.message(F.text == "💳 Balans")
+async def text_show_balance(message: Message, state: FSMContext) -> None:
+    if not await verify_access_middleware_msg(message):
         return
-    await callback.answer()
-    user_id = callback.from_user.id
-    cat_key = callback.data.split("_")[1]
-    
+    user_id = message.from_user.id
     if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "name": message.from_user.full_name, "combo": 0, "in_game": False}
         
-    if users_db[user_id].get("in_game", False):
-        await callback.message.answer("⚠️️ Hozir boshqa test ishlamoqda! Avval shuni tugating 🛑")
+    u_data = users_db[user_id]
+    score = u_data.get("score", 0)
+    money = u_data.get("money", 0)
+    withdrawn = u_data.get("withdrawn", 0)
+    refs = u_data.get("referrals_count", 0)
+    
+    bot_username = (await message.bot.get_me()).username
+    ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
+    
+    text = (
+        f"💎 **Foydalanuvchi Kabineti & Balans**\n\n"
+        f"👤 ID: `{user_id}`\n"
+        f"👥 Taklif qilingan do'stlar: **{refs} ta**\n"
+        f"🏆 Jami to'plagan ballaringiz: **{score} ta ball**\n"
+        f"💰 **Hozirgi asosiy balans: {money:,} so'm**\n"
+        f"💸 **Allaqachon yechib olganingiz: {withdrawn:,} so'm**\n\n"
+        f"🔗 **Sizning referal havolangiz:**\n`{ref_link}`\n"
+    )
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💵 Pulni Yechib Olish", callback_data="withdraw_money")]
+    ])
+    await message.answer(text, reply_markup=keyboard)
+
+
+@dp.message(F.text == "🎁 Kunlik Bonus")
+async def text_daily_bonus(message: Message, state: FSMContext) -> None:
+    if not await verify_access_middleware_msg(message):
         return
-
-    users_db[user_id]["category"] = cat_key
-
-
-@dp.callback_query(F.data == "daily_bonus")
-async def daily_bonus_handler(callback: CallbackQuery) -> None:
-    if not await verify_access_middleware(callback):
-        return
-    user_id = callback.from_user.id
-    if user_id in users_db and users_db[user_id].get("in_game", False):
-        await callback.answer("⚠️ O'yin paytida bonus olib bo'lmaydi!", show_alert=True)
-        return
-
+    user_id = message.from_user.id
     if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": message.from_user.full_name, "combo": 0, "in_game": False}
         
     now = datetime.datetime.now()
     last_bonus = users_db[user_id].get("last_bonus")
     
     if last_bonus and (now - last_bonus).total_seconds() < 86400:
         remaining_hours = int((86400 - (now - last_bonus).total_seconds()) // 3600)
-        await callback.answer(f"⏳ Siz kunlik bonusni allaqachon olgansiz! Keyingi bonus {remaining_hours} soatdan keyin ochiladi.", show_alert=True)
+        await message.answer(f"⏳ Siz kunlik bonusni allaqachon olgansiz! Keyingi bonus {remaining_hours} soatdan keyin ochiladi.")
         return
         
     bonus_score = random.randint(1, 3)
@@ -330,20 +333,13 @@ async def daily_bonus_handler(callback: CallbackQuery) -> None:
     users_db[user_id]["money"] += bonus_money
     users_db[user_id]["last_bonus"] = now
     
-    await callback.answer(f"🎉 Tabriklaymiz! Kunlik bonus: +{bonus_score} ball va +{bonus_money:,} so'm! 🎁", show_alert=True)
-    
-    text = "🏠 **Asosiy Menyu:**\n\nKerakli bo'limni tanlang:"
-    try:
-        await callback.message.edit_text(text, reply_markup=get_main_menu(user_id))
-    except:
-        pass
+    await message.answer(f"🎉 Tabriklaymiz! Kunlik bonus: +{bonus_score} ball va +{bonus_money:,} so'm! 🎁")
 
 
-@dp.callback_query(F.data == "top_board")
-async def top_board_handler(callback: CallbackQuery) -> None:
-    if not await verify_access_middleware(callback):
+@dp.message(F.text == "🏆 Top Reyting")
+async def text_top_board(message: Message, state: FSMContext) -> None:
+    if not await verify_access_middleware_msg(message):
         return
-    await callback.answer()
     sorted_users = sorted(users_db.items(), key=lambda x: (x[1].get("money", 0) + x[1].get("withdrawn", 0)), reverse=True)[:10]
     
     text = "🏆 **Top 10 Liderlar Reytingi**\n📊 *(To'plagan ballar, jami pul va yechib olganlar)*\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -356,17 +352,15 @@ async def top_board_handler(callback: CallbackQuery) -> None:
         medal = "🥇" if idx == 1 else ("🥈" if idx == 2 else ("🥉" if idx == 3 else f"{idx}."))
         text += f"{medal} **{name}**\n   🏆 {score} ball | 💰 Jami: {total_earned:,} so'm | 💸 Yechgan: {withdrawn:,} so'm\n\n"
         
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")]])
-    await callback.message.edit_text(text, reply_markup=keyboard)
+    await message.answer(text)
 
 
-@dp.callback_query(F.data == "referral_info")
-async def referral_info_handler(callback: CallbackQuery) -> None:
-    if not await verify_access_middleware(callback):
+@dp.message(F.text == "🔗 Referal Tizimi")
+async def text_referral_info(message: Message, state: FSMContext) -> None:
+    if not await verify_access_middleware_msg(message):
         return
-    await callback.answer()
-    user_id = callback.from_user.id
-    bot_username = (await callback.bot.get_me()).username
+    user_id = message.from_user.id
+    bot_username = (await message.bot.get_me()).username
     ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
     
     u_data = users_db.get(user_id, {"referrals_count": 0, "referred_users": []})
@@ -388,49 +382,40 @@ async def referral_info_handler(callback: CallbackQuery) -> None:
         f"{list_text}\n"
         f"📋 **Sizning taklif havolangiz:**\n`{ref_link}`\n"
     )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀ Orqaga", callback_data="back_to_menu")]])
-    await callback.message.edit_text(text, reply_markup=keyboard)
+    await message.answer(text)
 
 
-@dp.callback_query(F.data == "my_balance")
-async def show_balance(callback: CallbackQuery) -> None:
-    if not await verify_access_middleware(callback):
-        return
-    await callback.answer()
-    user_id = callback.from_user.id
-    if user_id not in users_db:
-        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "name": callback.from_user.full_name, "combo": 0, "in_game": False}
-        
-    u_data = users_db[user_id]
-    score = u_data.get("score", 0)
-    money = u_data.get("money", 0)
-    withdrawn = u_data.get("withdrawn", 0)
-    refs = u_data.get("referrals_count", 0)
-    
-    bot_username = (await callback.bot.get_me()).username
-    ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
-    
+@dp.message(F.text == "📜 O'yin Qoidalari")
+async def text_rules(message: Message, state: FSMContext) -> None:
     text = (
-        f"💎 **Foydalanuvchi Kabineti & Balans**\n\n"
-        f"👤 ID: `{user_id}`\n"
-        f"👥 Taklif qilingan do'stlar: **{refs} ta**\n"
-        f"🏆 Jami to'plagan ballaringiz: **{score} ta ball**\n"
-        f"💰 **Hozirgi asosiy balans: {money:,} so'm**\n"
-        f"💸 **Allaqachon yechib olganingiz: {withdrawn:,} so'm**\n\n"
-        f"🔗 **Sizning referal havolangiz:**\n`{ref_link}`\n"
+        f"📜 **O'yin Qoidalari:**\n\n"
+        f"1. Viktorina savollariga to'g'ri javob bering.\n"
+        f"2. Combo tizimi orqali ball va pul yutib boring.\n"
+        f"3. Balansingizda kamida 50 ball yig'ilgach, pulni yechib olish uchun ariza qoldirishingiz mumkin.\n"
+        f"4. Do'stlaringizni taklif qilib qo'shimcha bonuslar oling!"
     )
+    await message.answer(text)
+
+
+@dp.message(F.text == "👨‍💻 Admin bilan bog'lanish")
+async def text_contact_admin(message: Message, state: FSMContext) -> None:
+    await message.answer(f"👨‍💻 Savollar bo'yicha adminga murojaat qiling: @{ADMIN_USERNAME}")
+
+
+@dp.callback_query(F.data.startswith("cat_"))
+async def set_category_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    user_id = callback.from_user.id
+    cat_key = callback.data.split("_")[1]
     
-    keyboard_buttons = [
-        [InlineKeyboardButton(text="💵 Pulni Yechib Olish", callback_data="withdraw_money")],
-        [InlineKeyboardButton(text="◀ Orqaga", callback_data="back_to_menu")]
-    ]
-    await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
+    if user_id not in users_db:
+        users_db[user_id] = {"score": 0, "money": 0, "withdrawn": 0, "question_num": 1, "game_questions": [], "wrong_answers": [], "referrals_count": 0, "referred_users": [], "last_bonus": None, "name": callback.from_user.full_name, "combo": 0, "in_game": False}
+        
+    users_db[user_id]["category"] = cat_key
+    await callback.answer("Yo'nalish tanlandi!")
 
 
 @dp.callback_query(F.data == "withdraw_money")
 async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> None:
-    if not await verify_access_middleware(callback):
-        return
     await callback.answer()
     user_id = callback.from_user.id
     u_data = users_db.get(user_id, {"score": 0, "money": 0})
@@ -440,12 +425,11 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
         needed_more = 50 - score
         text = (
             f"❌ **Mablag'ni yechib olish imkonsiz!**\n\n"
-            f"⚠️️ Pulni yechib olish uchun hisobingizda kamida **50 ball** bo'lishi kerak!\n"
+            f"⚠️ Pulni yechib olish uchun hisobingizda kamida **50 ball** bo'lishi kerak!\n"
             f"📊 Hozirgi ballingiz: **{score} ta ball** (Yana {needed_more} ball kerak)\n\n"
             f"💡 *Viktorina o'ynang va do'stlar taklif qiling!*"
         )
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Orqaga", callback_data="my_balance")]])
-        await callback.message.edit_text(text, reply_markup=keyboard)
+        await callback.message.answer(text)
         return
 
     await state.set_state(WithdrawStates.waiting_for_name)
@@ -453,26 +437,19 @@ async def withdraw_money_handler(callback: CallbackQuery, state: FSMContext) -> 
         f"✅ **Tabriklaymiz! Ballingiz yetarli ({score} ball).**\n\n"
         f"📝 Pulni o'tkazib berishimiz uchun iltimos, **Ism va Familiyangizni** kiriting:"
     )
-    await callback.message.edit_text(text)
+    await callback.message.answer(text)
 
 
 @dp.message(WithdrawStates.waiting_for_name)
 async def process_withdraw_name(message: Message, state: FSMContext) -> None:
-    if not await check_user_subscription(message.bot, message.from_user.id):
-        await message.answer("❌ Avval kanalimizga a'zo bo'ling!")
-        return
     full_name = message.text.strip()
     await state.update_data(user_fullname=full_name)
-    
     await state.set_state(WithdrawStates.waiting_for_card)
     await message.answer("💳 Endi 16 xonali **Karta raqamingizni** (yoki karta turini, masalan: *Uzcard/Humo*) yuboring:")
 
 
 @dp.message(WithdrawStates.waiting_for_card)
 async def process_withdraw_card(message: Message, state: FSMContext) -> None:
-    if not await check_user_subscription(message.bot, message.from_user.id):
-        await message.answer("❌ Avval kanalimizga a'zo bo'ling!")
-        return
     card_info = message.text.strip()
     data = await state.get_data()
     fullname = data.get("user_fullname")
@@ -505,8 +482,7 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
         f"Ism: {fullname}\n"
         f"Karta: {card_info}\n"
         f"Summa: {withdrawn_amount:,} so'm\n\n"
-        f"⏳ Adminlar tez orada ma'lumotlarni tekshirib, mablag'ni kartangizga o'tkazib berishadi!",
-        reply_markup=get_main_menu(user_id)
+        f"⏳ Adminlar tez orada ma'lumotlarni tekshirib, mablag'ni kartangizga o'tkazib berishadi!"
     )
 
 
@@ -530,8 +506,7 @@ async def admin_panel_handler(message: Message) -> None:
     
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📢 Xabar Tarqatish", callback_data="admin_broadcast")],
-        [InlineKeyboardButton(text="➕ / ➖ Balansni O'zgartirish", callback_data="admin_change_score")],
-        [InlineKeyboardButton(text="🏠 Asosiy Menyuga Qaytish", callback_data="back_to_menu")]
+        [InlineKeyboardButton(text="➕ / ➖ Balansni O'zgartirish", callback_data="admin_change_score")]
     ])
     
     text = (
@@ -554,9 +529,7 @@ async def admin_change_score_start(callback: CallbackQuery, state: FSMContext) -
         return
         
     await state.set_state(AdminScoreStates.waiting_for_user_id)
-    text = "🆔 Balansini o'zgartirmoqchi bo'lgan foydalanuvchining **Telegram ID** raqamini yuboring:"
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="back_to_menu")]])
-    await callback.message.edit_text(text, reply_markup=keyboard)
+    await callback.message.answer("🆔 Balansini o'zgartirmoqchi bo'lgan foydalanuvchining **Telegram ID** raqamini yuboring:")
 
 
 @dp.message(AdminScoreStates.waiting_for_user_id)
@@ -605,9 +578,7 @@ async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext) -> N
         return
         
     await state.set_state(BroadcastStates.waiting_for_broadcast_message)
-    text = "📢 Barcha foydalanuvchilarga yubormoqchi bo'lgan **xabaringizni** (matn, rasm yoki video) yuboring:"
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="back_to_menu")]])
-    await callback.message.edit_text(text, reply_markup=keyboard)
+    await callback.message.answer("📢 Barcha foydalanuvchilarga yubormoqchi bo'lgan **xabaringizni** (matn, rasm yoki video) yuboring:")
 
 
 @dp.message(BroadcastStates.waiting_for_broadcast_message)
@@ -635,39 +606,11 @@ async def process_broadcast(message: Message, state: FSMContext) -> None:
     )
 
 
-@dp.callback_query(F.data == "back_to_menu")
-async def back_to_menu_handler(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.clear()
-    await callback.answer()
-    user_id = callback.from_user.id
-    user_name = callback.from_user.full_name
-    text = "🏠 **Asosiy Menyu:**\n\nKerakli bo'limni tanlang:"
-    try:
-        await callback.message.edit_text(text, reply_markup=get_main_menu(user_id))
-    except:
-        await callback.message.answer(text, reply_markup=get_main_menu(user_id))
-
-
-@dp.callback_query(F.data == "rules")
-async def rules_handler(callback: CallbackQuery) -> None:
-    await callback.answer()
-    text = (
-        f"📜 **O'yin Qoidalari:**\n\n"
-        f"1. Viktorina savollariga to'g'ri javob bering.\n"
-        f"2. Combo tizimi orqali ball va pul yutib boring.\n"
-        f"3. Balansingizda kamida 50 ball yig'ilgach, pulni yechib olish uchun ariza qoldirishingiz mumkin.\n"
-        f"4. Do'stlaringizni taklif qilib qo'shimcha bonuslar oling!"
-    )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️️ Orqaga", callback_data="back_to_menu")]])
-    await callback.message.edit_text(text, reply_markup=keyboard)
-
-
 async def main() -> None:
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     
-    await bot.set_my_commands([
-        BotCommand(command="start", description="Botni qayta ishga tushirish / Asosiy menyu")
-    ])
+    # Ko'k menyu tugmalarini butunlay tozalash uchun bo'sh ro'yxat beramiz
+    await bot.delete_my_commands()
     
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     print("Bot ishga tushdi...")
