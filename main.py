@@ -42,7 +42,7 @@ logging.basicConfig(
 # MUHIM:
 # Eski tokeningizni ishlatmang.
 # Replit/Render Secrets ichiga yangi BOT_TOKEN qo'ying.
-BOT_TOKEN = os.getenv("8963661833:AAENuseyKPy2iHz9LYldALKfr6Z3DdTJR5w")
+BOT_TOKEN = os.getenv("8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw")
 
 if not BOT_TOKEN:
     raise RuntimeError(
