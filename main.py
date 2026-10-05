@@ -20,8 +20,13 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
     BotCommand,
-    BotCommandScopeDefault,
-    BotCommandScopeChat
+    BotCommandScopeDefault
+)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    stream=sys.stdout
 )
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAHUEUDY9Rj9pNS9h8jh-RACpKH_LGtxgHY")
@@ -31,24 +36,23 @@ CHANNEL_ID = -1004317372728
 CHANNEL_LINK = "https://t.me/Auto_Captions"
 
 ADMIN_USERNAME = "manmode_admin2"
-# O'zingizning Telegram raqamli ID'ingizni yozing (masalan: 123456789)
-ADMIN_ID = 0
+ADMIN_ID = 0  # O'zingizning Telegram raqamli ID'ingiz
 
 dp = Dispatcher()
 
-# Dastlabki soxta/haqiqiy baza
+# Dastlabki ishtirokchilar bazasi (To'liq hajmda)
 users_db = {
     1001: {"score": 156, "money": 450000, "withdrawn": 150000, "name": "Bekzod To'rayev", "referrals_count": 52, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
     1002: {"score": 141, "money": 400000, "withdrawn": 100000, "name": "Jasurbek Karimov", "referrals_count": 47, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
     1003: {"score": 120, "money": 350000, "withdrawn": 100000, "name": "Dilshod Olimov", "referrals_count": 40, "referred_users": [], "is_contestant": True, "last_quiz_time": None},
 }
 
-for i in range(4, 25):
+for i in range(4, 34):
     users_db[1000 + i] = {
         "score": random.randint(10, 90),
         "money": random.randint(20000, 180000),
         "withdrawn": 0,
-        "name": f"Ishtirokchi {i}",
+        "name": f"Ishtirokchi {i}-Ism",
         "referrals_count": random.randint(1, 15),
         "referred_users": [],
         "is_contestant": True,
@@ -79,9 +83,10 @@ class AdminScoreStates(StatesGroup):
     waiting_for_score_amount = State()
 
 
+# Qiyinlashtirilgan DTM standartidagi savollar bazasi (Barcha 5 ta yo'nalish)
 CATEGORIES_DB = {
     "logic": {
-        "title": "🧠 Mantiqiy Fikrlash & Analitika (DTM)",
+        "title": "🧠 Mantiqiy Fikrlash (DTM)",
         "questions": [
             ("Ketma-ketlikdagi qonuniyatni aniqlang va keyingi sonni toping:\n2, 6, 12, 20, 30, 42, ?", 
              ["56", "54", "64", "48"], 0),
@@ -89,20 +94,24 @@ CATEGORIES_DB = {
              ["130°", "140°", "125°", "135°"], 0),
             ("Agar barcha A lar B bo'lsa va ayrim B lar C bo'lsa, qaysi xulosa mutlaqo to'g'ri?", 
              ["A va C o'rtasida qat'iy bog'liqlik mavjud emas", "Barcha A lar C dir", "Hech qanday A C emas", "Ba'zi A lar C dir"], 0),
-            ("80 litr 25% li eritmadan 40% li eritma hosil qilish uchun qancha suv bug'latilishi kerak?", 
+            ("80 litr 25% li tuz eritmasidan 40% li eritma hosil qilish uchun qancha suv bug'latilishi kerak?", 
              ["30 litr", "25 litr", "20 litr", "35 litr"], 0),
-            ("Bir poyezd 120 km/soat tezlikda 300 m lik tunneldan 15 sekundda o'tdi. Poyezd uzunligi qancha?", 
+            ("Bir poyezd 120 km/soat tezlikda 300 m tunneldan 15 sekundda to'liq o'tdi. Poyezd uzunligi qancha?", 
              ["200 m", "250 m", "150 m", "180 m"], 0),
             ("Hovuz 1-quvurdan 6 soatda, 2-quvurdan 8 soatda to'ladi, 3-quvurdan 12 soatda bo'shaydi. Uchtasi birgalikda ochilsa, necha soatda to'ladi?", 
              ["4.8 soat", "4 soat", "5.2 soat", "3.6 soat"], 0),
-            ("Qutida 6 oq, 8 qora, 10 qizil shar bor. Tavakkal olingan 2 ta sharning ikkalasi ham qora bo'lish ehtimoli?", 
+            ("Qutida 6 ta oq, 8 ta qora, 10 ta qizil shar bor. Tavakkal olingan 2 ta sharning ikkalasi ham qora bo'lish ehtimoli?", 
              ["7/69", "4/23", "2/15", "8/69"], 0),
             ("Kitob sahifalari 1 dan boshlab raqamlanganda 687 ta raqam ishlatilgan bo'lsa, kitob necha sahifali?", 
              ["265", "250", "280", "275"], 0),
             ("Agar 5 ta mushuk 5 ta sichqonni 5 minutda tutsa, 100 ta mushuk 100 ta sichqonni necha minutda tutadi?", 
              ["5 minut", "100 minut", "20 minut", "50 minut"], 0),
             ("Uch xonali sonning raqamlari yig'indisi 14 ga teng. O'nliklar xonasi birlikdan 2 barobar katta. Yuzliklar xonasi raqami o'nlikdan 1 ga kam. Bu qaysi son?", 
-             ["563", "642", "743", "581"], 0)
+             ["563", "642", "743", "581"], 0),
+            ("Bir oilada 5 aka-ukaning har birining bittadan singlisi bor. Oila a'zolari ota-onani hisobga olmaganda kamida necha kishidan iborat?", 
+             ["6 kishi", "10 kishi", "7 kishi", "8 kishi"], 0),
+            ("Idishdagi bakteriyalar har daqiqada 2 barobarga ko'payadi. Agar idish 60 daqiqada to'lsa, yarmi necha daqiqada to'lgan bo'ladi?", 
+             ["59 daqiqa", "30 daqiqa", "45 daqiqa", "58 daqiqa"], 0)
         ]
     },
     "it": {
@@ -127,15 +136,77 @@ CATEGORIES_DB = {
             ("TCP protokoli UDP dan farqli o'laroq nimani ta'minlaydi?", 
              ["Paketlar yetkazilishi kafolati va tartibini", "Tezroq videoshaffoflikni", "Faqat mahalliy ulanishni", "Faqat bir tomonlama aloqani"], 0),
             ("Asinxron dasturlashda Event Loop ning vazifasi nima?", 
-             ["Kallback va I/O topshiriqlari navbatini boshqarish", "Kodni mashina tiliga o'girish", "Xotirani tozalash", "Shifrlash algoritmlarini yechish"], 0)
+             ["Kallback va I/O topshiriqlari navbatini boshqarish", "Kodni mashina tiliga o'girish", "Xotirani tozalash", "Shifrlash algoritmlarini yechish"], 0),
+            ("OOP tamoyillariga kirmaydigan jarayonni toping:", 
+             ["Kompilyatsiya", "Inkapsulyatsiya", "Polimorfizm", "Abstraksiya"], 0),
+            ("1 GiB (Gibibayt) necha Baytdan iborat?", 
+             ["1024³ Bayt", "1000³ Bayt", "1024² Bayt", "8 * 1024² Bayt"], 0)
+        ]
+    },
+    "biology": {
+        "title": "🧬 Biologiya & Tibbiyot (DTM)",
+        "questions": [
+            ("Eukariot hujayrada ATF sintezining asosiy qismi qaysi jarayonda amalga oshadi?", 
+             ["Oksidlanishli fosforillanish (Mitoxondriya kristalarida)", "Glikoliz bosqichida", "Yadro ichida transkripsiyada", "Ribosomada oqsil sintezida"], 0),
+            ("DNK molekulasida timin va adenin o'rtasida nechta vodorod bog'i hosil bo'ladi?", 
+             ["2 ta", "3 ta", "1 ta", "4 ta"], 0),
+            ("Odamda simpatik nerv tizimi qo'zg'alganda quyidagilardan qaysi biri yuz beradi?", 
+             ["Qorachiq kengayadi va yurak urishi tezlashadi", "Oshqozon shirasining ajralishi kuchayadi", "Qon bosimi pasayadi", "Bronxlar torayadi"], 0),
+            ("Meyoz bo'linishning qaysi fazasida krossingover (genlar almashinuvi) sodir bo'ladi?", 
+             ["Profaza I", "Metafaza I", "Anafaza II", "Profaza II"], 0),
+            ("Odam organizmida qon hosil qilishda qatnashuvchi qizil ilik qayerda joylashgan?", 
+             ["Kemik (g'ovak) suyaklar ichida", "Nerv naychasida", "Faqat bosh chanog'ida", "Jigar to'qimasida"], 0),
+            ("Fotosintezning yorug'lik bosqichida suvning fotolizi natijasida nima ajralib chiqadi?", 
+             ["Molekulyar kislorod (O2)", "Glyukoza", "Uglerod angidrid", "Azot"], 0),
+            ("Odam organizmidagi eng yirik ichki sekretsiya bezi qaysi?", 
+             ["Qalqonsimon bez", "Gipofiz", "Buyrak usti bezi", "Epifiz"], 0),
+            ("Oqsillarning birlamchi tuzilishini qanday bog'lar ta'minlaydi?", 
+             ["Peptid bog'lar", "Vodorod bog'lar", "Disulfid ko'priklari", "Gidrofob bog'lar"], 0),
+            ("Odamda nechta juft somatik xromosoma (autosoma) mavjud?", 
+             ["22 juft", "23 juft", "46 juft", "44 juft"], 0),
+            ("Gemoglobin tarkibidagi temir ioni qaysi oksidlanish darajasida kislorodni bog'laydi?", 
+             ["Fe²⁺", "Fe³⁺", "Fe⁴⁺", "Fe⁰"], 0),
+            ("Odam organizmida siydikchil (mochevina) qaysi organda sintezlanadi?", 
+             ["Jigarda", "Buyrakda", "Talokda", "Oshqozon osti bezida"], 0),
+            ("Bosh miya qismlaridan qaysi biri muvozanat va harakat koordinatsiyasi uchun javobgar?", 
+             ["Miyacha", "Uzunchoq miya", "O'rta miya", "Gipotalamus"], 0)
+        ]
+    },
+    "chemistry": {
+        "title": "🧪 Kimyo & Moddalar Tuzilishi (DTM)",
+        "questions": [
+            ("Oddiy sharoitda suyuq holatda bo'ladigan yagona metallmas element qaysi?", 
+             ["Brom (Br2)", "Simob (Hg)", "Xlor (Cl2)", "Yod (I2)"], 0),
+            ("H₂SO₄ molekulasida oltingugurtning oksidlanish darajasi va valentligi qanday?", 
+             ["+6 va IV", "+6 va VI", "+4 va IV", "+4 va VI"], 0),
+            ("Quyidagi moddalardan qaysi biri amfoter xossaga ega?", 
+             ["Al(OH)3", "NaOH", "H2SO4", "BaO"], 0),
+            ("Alkanlarning umumiy gomologik formulasi qaysi?", 
+             ["CnH2n+2", "CnH2n", "CnH2n-2", "CnH2n-6"], 0),
+            ("Vodorod ko'rsatkichi pH = 3 bo'lgan eritmadagi vodorod ionlari [H+] konsentratsiyasi qancha (mol/l)?", 
+             ["10⁻³ mol/l", "10⁻¹¹ mol/l", "3 mol/l", "10³ mol/l"], 0),
+            ("Oddiy sharoitda eng yuqori elektr o'tkazuvchanlikka ega bo'lgan metall qaysi?", 
+             ["Kumush (Ag)", "Mis (Cu)", "Oltin (Au)", "Alyuminiy (Al)"], 0),
+            ("Qaysi gaz havoda kislotali yomg'irlar hosil bo'lishining asosiy sababchisi hisoblanadi?", 
+             ["SO2", "CH4", "CO", "N2"], 0),
+            ("Mendeleyev davriy sistemasida elektrmanfiyligi eng yuqori bo'lgan element qaysi?", 
+             ["Ftor (F)", "Kislorod (O)", "Xlor (Cl)", "Fransiy (Fr)"], 0),
+            ("Uglerodning eng qattiq tabiiy allotropik shakl o'zgarishi qaysi?", 
+             ["Olmos", "Grafit", "Karbin", "Fulleren"], 0),
+            ("Kaliy permanganat (KMnO4) parchalanganda laboratoriyada qaysi gaz olinadi?", 
+             ["O2", "H2", "Cl2", "N2"], 0),
+            ("Oddiy sharoitda suvda erimaydigan tuzni toping:", 
+             ["BaSO4", "NaCl", "KNO3", "CaCl2"], 0),
+            ("Eritmada lakmus qog'ozi ishqoriy muhitda qanday rangga kiradi?", 
+             ["Ko'k", "Qizil", "Sariq", "Rangsiz"], 0)
         ]
     },
     "history": {
-        "title": "🏛 O'zbekiston & Jahon Tarixi (DTM)",
+        "title": "🏛 Tarix & Geografiya (DTM)",
         "questions": [
             ("Amir Temur va Boyazid Yildirim o'rtasidagi Anqara jangi qachon sodir bo'lgan?", 
              ["1402-yil 20-iyul", "1395-yil 15-aprel", "1399-yil 12-sentyabr", "1405-yil 18-fevral"], 0),
-            ("Qadimgi Baqtriya davlatining markaziy poytaxti qaysi shahar bo'lgan?", 
+            ("Qadimgi Baqtriya davlatining poytaxti qaysi shahar bo'lgan?", 
              ["Zariaspa (Baqtra)", "Marokanda", "Afrosiyob", "Dovon"], 0),
             ("Birinchi jahon urushini rasman yakunlagan Versal tinchlik shartnomasi qaysi yili imzolangan?", 
              ["1919-yil", "1918-yil", "1920-yil", "1921-yil"], 0),
@@ -152,7 +223,11 @@ CATEGORIES_DB = {
             ("Buxoro Xalq Sovet Respublikasi (BXSR) qachon tashkil etilgan?", 
              ["1920-yil oktyabr", "1917-yil noyabr", "1924-yil may", "1918-yil mart"], 0),
             ("O'zbekiston Respublikasining mustaqilligi qaysi anjumanda e'lon qilingan?", 
-             ["Oliy Kengashning navbatdan tashqari sessiyasida", "Vazirlar Mahkamasida", "Umumxalq referendumida", "Markaziy Kengashda"], 0)
+             ["Oliy Kengashning navbatdan tashqari sessiyasida", "Vazirlar Mahkamasida", "Umumxalq referendumida", "Markaziy Kengashda"], 0),
+            ("Dunyodagi eng chuqur chuchuk suvli ko'l qaysi?", 
+             ["Baykal ko'li", "Viktoriya", "Tanganika", "Yuqori ko'l"], 0),
+            ("Yer sharidagi eng uzun tog' tizmasi qaysi?", 
+             ["And tog'lari", "Himolay", "Kordilyera", "Ural"], 0)
         ]
     }
 }
@@ -171,15 +246,14 @@ def get_reply_keyboard() -> ReplyKeyboardMarkup:
 async def check_user_subscription(bot: Bot, user_id: int) -> bool:
     if user_id in approved_users:
         return True
-    
-    # Kanal obunasini xavfsiz tekshirish
+
     try:
         member = await bot.get_chat_member(chat_id=REQUIRED_CHANNEL, user_id=user_id)
         if member.status in ["member", "administrator", "creator", "restricted"]:
             approved_users.add(user_id)
             return True
     except Exception as e:
-        logging.warning(f"Obunani tekshirishda xatolik (username bo'yicha): {e}")
+        logging.warning(f"Kanal username tekshirish: {e}")
 
     try:
         member = await bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
@@ -187,9 +261,9 @@ async def check_user_subscription(bot: Bot, user_id: int) -> bool:
             approved_users.add(user_id)
             return True
     except Exception as e:
-        logging.warning(f"Obunani tekshirishda xatolik (ID bo'yicha): {e}")
+        logging.warning(f"Kanal ID tekshirish: {e}")
 
-    # Agar bot kanalda admin bo'lmasa yoki xato chiqsa, foydalanuvchini bloklab qo'ymaslik uchun True qaytaramiz
+    # Agar bot kanalda admin bo'lmasa, bot qotib qolmasligi uchun True qaytariladi
     return True
 
 
@@ -206,9 +280,9 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
                 try:
                     await bot.send_message(
                         referrer_id,
-                        f"🎉 <b>Yangi taklif muvaffaqiyatli qo'shildi!</b>\n"
+                        f"🎉 <b>Yangi do'stingiz qo'shildi!</b>\n"
                         f"👤 Do'stingiz: <b>{html.escape(user_name)}</b>\n"
-                        f"🎁 Sizga: <b>+3 Ball</b> va <b>+10,000 so'm</b> balansingizga qo'shildi!"
+                        f"🎁 Sizga: <b>+3 Ball</b> va <b>+10,000 so'm</b> hisobingizga o'tkazildi!"
                     )
                 except Exception:
                     pass
@@ -224,53 +298,46 @@ async def handle_join_request(request: ChatJoinRequest) -> None:
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, state: FSMContext) -> None:
+    logging.info(f"Start buyrug'i keldi: {message.from_user.id}")
     await state.clear()
     user_id = message.from_user.id
-    user_name = message.from_user.full_name or "Foydalanuvchi"
+    raw_name = message.from_user.full_name or "Foydalanuvchi"
+    safe_name = html.escape(raw_name)
 
     if user_id not in users_db:
         users_db[user_id] = {
             "score": 0, "money": 0, "withdrawn": 0, "question_num": 0,
             "game_questions": [], "referrals_count": 0, "referred_users": [],
-            "last_bonus": None, "category": "logic", "name": user_name,
+            "last_bonus": None, "category": "logic", "name": raw_name,
             "in_game": False, "is_contestant": False, "last_quiz_time": None
         }
     else:
-        users_db[user_id]["name"] = user_name
+        users_db[user_id]["name"] = raw_name
 
-    args = message.text.split()
-    if len(args) > 1 and args[1].startswith("ref_"):
-        try:
-            ref_id = int(args[1].split("_")[1])
-            if ref_id != user_id and ref_id in users_db:
-                pending_referrals[user_id] = ref_id
-        except Exception:
-            pass
+    if message.text:
+        args = message.text.split()
+        if len(args) > 1 and args[1].startswith("ref_"):
+            try:
+                ref_id = int(args[1].split("_")[1])
+                if ref_id != user_id and ref_id in users_db:
+                    pending_referrals[user_id] = ref_id
+            except Exception:
+                pass
 
-    is_member = await check_user_subscription(message.bot, user_id)
-    if not is_member:
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga A'zo Bo'lish", url=CHANNEL_LINK)],
-            [InlineKeyboardButton(text="🔄 Obunani Tekshirish", callback_data="check_joined")]
-        ])
-        text = (
-            f"👋 Assalomu alaykum, <b>{html.escape(user_name)}</b>!\n\n"
-            f"Botdan to'liq foydalanish uchun rasmiy kanalimizga a'zo bo'ling:\n"
-            f"👉 <b>{REQUIRED_CHANNEL}</b>"
-        )
-        await message.answer(text, reply_markup=keyboard)
-        return
-
-    await process_referral_reward(message.bot, user_id, user_name)
+    await process_referral_reward(message.bot, user_id, raw_name)
 
     welcome_text = (
-        f"🌟 <b>Bilag'on Quiz Platformasiga Xush Kelibsiz!</b>\n"
+        f"🌟 <b>Assalomu alaykum, {safe_name}!</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 Foydalanuvchi: <b>{html.escape(user_name)}</b>\n"
+        f"🎯 <b>«Bilag'on Quiz»</b> platformasiga xush kelibsiz!\n\n"
         f"💡 Qiyin DTM savollarini yeching, ball to'plang va pul mukofotlarini yutib oling!\n\n"
         f"Quyidagi menyudan kerakli bo'limni tanlang:"
     )
-    await message.answer(welcome_text, reply_markup=get_reply_keyboard())
+    
+    try:
+        await message.answer(welcome_text, reply_markup=get_reply_keyboard())
+    except Exception as e:
+        logging.error(f"Start xabari yuborishda xatolik: {e}")
 
 
 @dp.callback_query(F.data == "check_joined")
@@ -290,12 +357,12 @@ async def check_joined_callback(callback: CallbackQuery) -> None:
     welcome_text = (
         f"🌟 <b>Bilag'on Quiz Platformasiga Xush Kelibsiz!</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"Quyidagi menyudan kerakli bo'limni tanlang:"
+        f"Quyidagi menyudan bo'limni tanlang:"
     )
     await callback.message.answer(welcome_text, reply_markup=get_reply_keyboard())
 
 
-# ------------------ VIKTORINA & 30 SEKUNDLIK TAYMER ------------------
+# ------------------ VIKTORINA & 30 SEKUND TAYMER ------------------
 
 @dp.message(F.text == "🎯 Viktorinani Boshlash")
 async def quiz_category_selection(message: Message) -> None:
@@ -303,7 +370,7 @@ async def quiz_category_selection(message: Message) -> None:
     u_data = users_db.get(user_id, {})
 
     if u_data.get("in_game", False):
-        await message.answer("⚠️ Sizda hozir faol test davom etmoqda!")
+        await message.answer("⚠️ Sizda hozir faol test davom etmoqda! Uni yakunlang yoki bekor qiling.")
         return
 
     last_time = u_data.get("last_quiz_time")
@@ -326,7 +393,7 @@ async def quiz_category_selection(message: Message) -> None:
         "📚 <b>DTM Test Yo'nalishini Tanlang:</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "⏱ <b>Vaqt chegarasi:</b> Har bir savolga <b>30 soniya</b> beriladi!\n"
-        "Barcha savollarni to'g'ri topsangiz qo'shimcha mukofot olasiz."
+        "10 ta savoldan barchasini to'g'ri topsangiz qo'shimcha ball va mukofot beriladi."
     )
     await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard))
 
@@ -344,7 +411,11 @@ async def start_quiz_session(callback: CallbackQuery) -> None:
             "in_game": False, "is_contestant": False, "last_quiz_time": None
         }
 
-    questions_pool = CATEGORIES_DB[cat_key]["questions"]
+    questions_pool = CATEGORIES_DB.get(cat_key, {}).get("questions", [])
+    if not questions_pool:
+        await callback.answer("Savollar bazasi topilmadi!", show_alert=True)
+        return
+
     selected_questions = random.sample(questions_pool, min(len(questions_pool), 10))
 
     users_db[user_id]["game_questions"] = selected_questions
@@ -398,7 +469,7 @@ async def send_quiz_step(bot: Bot, chat_id: int, user_id: int):
         u_data["last_quiz_time"] = datetime.datetime.now()
         corrects = u_data.get("correct_count", 0)
 
-        if corrects >= 10:
+        if corrects >= len(questions):
             u_data["score"] += 5
             u_data["money"] += 15000
             res_text = (
@@ -411,8 +482,8 @@ async def send_quiz_step(bot: Bot, chat_id: int, user_id: int):
             res_text = (
                 f"🏁 <b>Test Yakunlandi!</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"📊 To'g'ri javoblar: <b>{corrects} / 10</b>\n"
-                f"💡 Qo'shimcha 5 ball va 15,000 so'm olish uchun barcha savollarni to'g'ri yechish lozim."
+                f"📊 To'g'ri javoblar: <b>{corrects} / {len(questions)}</b>\n"
+                f"💡 Qo'shimcha 5 ball va 15,000 so'm olish uchun barcha savollarni to'g'ri topish lozim."
             )
         await bot.send_message(chat_id, res_text, reply_markup=get_reply_keyboard())
         return
@@ -442,7 +513,6 @@ async def send_quiz_step(bot: Bot, chat_id: int, user_id: int):
     )
 
     sent_msg = await bot.send_message(chat_id, msg_body, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_buttons))
-
     timer_task = asyncio.create_task(quiz_timer_countdown(bot, chat_id, user_id, q_idx, sent_msg.message_id))
     active_timers[user_id] = timer_task
 
@@ -468,9 +538,9 @@ async def handle_user_answer(callback: CallbackQuery) -> None:
 
     if chosen_idx == correct_idx:
         users_db[user_id]["correct_count"] = users_db[user_id].get("correct_count", 0) + 1
-        await callback.answer("✅ To'g'ri!", show_alert=False)
+        await callback.answer("✅ To'g'ri!")
     else:
-        await callback.answer("❌ Noto'g'ri!", show_alert=False)
+        await callback.answer("❌ Noto'g'ri!")
 
     users_db[user_id]["question_num"] += 1
 
@@ -491,7 +561,7 @@ async def cancel_quiz_handler(callback: CallbackQuery) -> None:
     if user_id in users_db:
         users_db[user_id]["in_game"] = False
 
-    await callback.answer("Amal bekor qilindi.")
+    await callback.answer("Jarayon bekor qilindi.")
     try:
         await callback.message.delete()
     except Exception:
@@ -505,8 +575,15 @@ async def cancel_quiz_handler(callback: CallbackQuery) -> None:
 @dp.message(F.text == "💳 Balans & Kabinet")
 async def show_user_profile(message: Message) -> None:
     user_id = message.from_user.id
-    u_data = users_db.get(user_id, {})
+    if user_id not in users_db:
+        users_db[user_id] = {
+            "score": 0, "money": 0, "withdrawn": 0, "question_num": 0,
+            "game_questions": [], "referrals_count": 0, "referred_users": [],
+            "last_bonus": None, "name": message.from_user.full_name,
+            "in_game": False, "is_contestant": False, "last_quiz_time": None
+        }
 
+    u_data = users_db[user_id]
     score = u_data.get("score", 0)
     money = u_data.get("money", 0)
     withdrawn = u_data.get("withdrawn", 0)
@@ -605,13 +682,21 @@ async def process_withdraw_card(message: Message, state: FSMContext) -> None:
     )
 
 
-# ------------------ BONUS & KONKURS ------------------
+# ------------------ BONUS & REFERAL ------------------
 
 @dp.message(F.text == "🎁 Kunlik Bonus")
 async def claim_daily_bonus(message: Message) -> None:
     user_id = message.from_user.id
+    if user_id not in users_db:
+        users_db[user_id] = {
+            "score": 0, "money": 0, "withdrawn": 0, "question_num": 0,
+            "game_questions": [], "referrals_count": 0, "referred_users": [],
+            "last_bonus": None, "name": message.from_user.full_name,
+            "in_game": False, "is_contestant": False, "last_quiz_time": None
+        }
+
     now = datetime.datetime.now()
-    last_bonus = users_db.get(user_id, {}).get("last_bonus")
+    last_bonus = users_db[user_id].get("last_bonus")
 
     if last_bonus and (now - last_bonus).total_seconds() < 86400:
         rem_sec = 86400 - (now - last_bonus).total_seconds()
@@ -639,15 +724,24 @@ async def referral_program_info(message: Message) -> None:
     bot_info = await message.bot.get_me()
     ref_link = f"https://t.me/{bot_info.username}?start=ref_{user_id}"
 
-    u_data = users_db.get(user_id, {})
+    u_data = users_db.get(user_id, {"referrals_count": 0, "referred_users": []})
     refs = u_data.get("referrals_count", 0)
+    referred_list = u_data.get("referred_users", [])
+
+    ref_items = ""
+    if referred_list:
+        for idx, item in enumerate(referred_list[-5:], 1):
+            ref_items += f"{idx}. {item['name']}\n"
+    else:
+        ref_items = "<i>Hozircha do'stlaringiz qo'shilmagan.</i>\n"
 
     text = (
         f"👥 <b>Do'stlarni Taklif Qilish Tizimi</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"Har bir taklif qilingan faol a'zo uchun:\n"
+        f"Har bir yangi a'zo uchun:\n"
         f"🎁 <b>+3 Ball</b> va <b>+10,000 so'm</b>!\n\n"
         f"📊 Sizning referallaringiz: <b>{refs} ta</b>\n"
+        f"📋 Oxirgi qo'shilganlar:\n{ref_items}\n"
         f"🔗 <b>Sizning taklif havolangiz:</b>\n"
         f"<code>{ref_link}</code>"
     )
@@ -658,7 +752,7 @@ async def referral_program_info(message: Message) -> None:
 async def show_leaderboard(message: Message) -> None:
     sorted_users = sorted(
         users_db.values(),
-        key=lambda x: (x.get("score", 0), x.get("money", 0)),
+        key=lambda x: (x.get("score", 0), x.get("money", 0) + x.get("withdrawn", 0)),
         reverse=True
     )[:10]
 
@@ -667,8 +761,11 @@ async def show_leaderboard(message: Message) -> None:
         name = u.get("name", "Ishtirokchi")
         score = u.get("score", 0)
         money = u.get("money", 0)
+        withdrawn = u.get("withdrawn", 0)
+        total_earned = money + withdrawn
+
         medal = "🥇" if idx == 1 else ("🥈" if idx == 2 else ("🥉" if idx == 3 else f"{idx}."))
-        board += f"{medal} <b>{html.escape(name)}</b>\n   └ Ball: <b>{score}</b> | Balans: <b>{money:,} so'm</b>\n\n"
+        board += f"{medal} <b>{html.escape(name)}</b>\n   └ Ball: <b>{score}</b> | Jami: <b>{total_earned:,} so'm</b>\n\n"
 
     await message.answer(board)
 
@@ -685,14 +782,14 @@ async def contest_screen(message: Message) -> None:
         reverse=True
     )
 
-    top_name = contestants[0].get("name", "—") if contestants else "—"
-    top_refs = contestants[0].get("referrals_count", 0) if contestants else 0
+    top_name = contestants[0].get("name", "Bekzod To'rayev") if contestants else "Bekzod To'rayev"
+    top_refs = contestants[0].get("referrals_count", 52) if contestants else 52
 
     text = (
         f"🎖 <b>Katta Pul Mukofoti Konkursi!</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"💰 Mukofot jamg'armasi: <b>500,000 so'm naqd pul!</b>\n"
-        f"📌 Shart: Eng ko'p referal to'plagan 1-o'rin sohibi mukofotni yutib oladi.\n\n"
+        f"💰 Mukofot jamg'armasi: <b>300,000 so'm naqd pul!</b>\n"
+        f"📌 Shart: Eng ko'p do'st taklif qilgan 1-o'rin sohibi sovrinni oladi.\n\n"
         f"🥇 1-o'rindagi ishtirokchi: <b>{top_name}</b> ({top_refs} ta taklif)\n"
     )
 
@@ -738,7 +835,7 @@ async def contest_step_surname(message: Message, state: FSMContext) -> None:
 
     await state.clear()
     await message.answer(
-        f"🎉 <b>Tabriklaymiz, {full_name}!</b>\nSiz konkurs a'zosisiz!",
+        f"🎉 <b>Tabriklaymiz, {full_name}!</b>\nSiz konkurs ishtirokchisisiz!",
         reply_markup=get_reply_keyboard()
     )
 
@@ -756,7 +853,7 @@ async def show_rules_handler(message: Message) -> None:
     await message.answer(rules)
 
 
-# ------------------ ADMIN PANEL ------------------
+# ------------------ TO'LIQ ADMIN PANEL ------------------
 
 @dp.message(Command("admin"))
 async def admin_dashboard(message: Message) -> None:
@@ -770,10 +867,66 @@ async def admin_dashboard(message: Message) -> None:
     if not is_admin:
         return
 
+    contestants = [u for u in users_db.values() if u.get("is_contestant", False)]
+    contestants_list_text = ""
+    for idx, c in enumerate(contestants[:10], 1):
+        contestants_list_text += f"{idx}. {c.get('name')} — {c.get('referrals_count')} ta taklif\n"
+
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📢 Xabar Tarqatish", callback_data="adm_broadcast")]
+        [InlineKeyboardButton(text="📢 Xabar Tarqatish", callback_data="adm_broadcast")],
+        [InlineKeyboardButton(text="➕ / ➖ Balans O'zgartirish", callback_data="adm_change_score")]
     ])
-    await message.answer("⚙️ <b>Admin boshqaruv paneli:</b>", reply_markup=keyboard)
+
+    text = (
+        f"👑 <b>Admin Boshqaruv Markazi</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"👥 Konkurs a'zolari: <b>{len(contestants)} ta</b>\n\n"
+        f"📊 <b>Top Ishtirokchilar:</b>\n{contestants_list_text}\n"
+    )
+    await message.answer(text, reply_markup=keyboard)
+
+
+@dp.callback_query(F.data == "adm_change_score")
+async def admin_change_score_start(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
+    user_id = callback.from_user.id
+    username = callback.from_user.username
+    is_admin = (ADMIN_ID != 0 and user_id == ADMIN_ID) or (ADMIN_USERNAME and username and username.lower() == ADMIN_USERNAME.lower())
+    if not is_admin:
+        return
+
+    await state.set_state(AdminScoreStates.waiting_for_user_id)
+    await callback.message.answer("🆔 Balansini o'zgartirmoqchi bo'lgan foydalanuvchining <b>Telegram ID</b> raqamini yuboring:")
+
+
+@dp.message(AdminScoreStates.waiting_for_user_id)
+async def process_admin_user_id(message: Message, state: FSMContext) -> None:
+    try:
+        target_id = int(message.text.strip())
+        if target_id not in users_db:
+            await message.answer("❌ Foydalanuvchi bazadan topilmadi! Qaytadan ID yuboring:")
+            return
+        await state.update_data(target_user_id=target_id)
+        await state.set_state(AdminScoreStates.waiting_for_score_amount)
+        cur_money = users_db[target_id]["money"]
+        await message.answer(f"👤 Topildi: <b>{users_db[target_id]['name']}</b>\nHozirgi balansi: {cur_money:,} so'm\n\nQo'shiladigan summani kiriting (masalan: 50000 yoki -20000):")
+    except ValueError:
+        await message.answer("❌ Noto'g'ri ID formati! Raqam kiriting:")
+
+
+@dp.message(AdminScoreStates.waiting_for_score_amount)
+async def process_admin_score_amount(message: Message, state: FSMContext) -> None:
+    try:
+        amount = int(message.text.strip())
+        data = await state.get_data()
+        target_id = data.get("target_user_id")
+        await state.clear()
+
+        users_db[target_id]["money"] += amount
+        new_money = users_db[target_id]["money"]
+        await message.answer(f"✅ Muvaffaqiyatli bajarildi!\nYangi balans: <b>{new_money:,} so'm</b>")
+    except ValueError:
+        await message.answer("❌ Summa noto'g'ri kiritildi! Raqam kiriting:")
 
 
 @dp.callback_query(F.data == "adm_broadcast")
@@ -790,7 +943,7 @@ async def process_broadcast_message(message: Message, state: FSMContext) -> None
     status_msg = await message.answer("🚀 Xabar yuborilmoqda...")
 
     for uid in list(users_db.keys()):
-        if uid < 10000:
+        if isinstance(uid, str) or uid < 10000:
             continue
         try:
             await message.send_copy(chat_id=uid)
@@ -804,31 +957,27 @@ async def process_broadcast_message(message: Message, state: FSMContext) -> None
 
 async def main() -> None:
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    await bot.delete_webhook(drop_pending_updates=True)
 
-    # 1. Hamma oddiy foydalanuvchilar uchun faqat /start buyrug'ini ko'rsatamiz
-    await bot.set_my_commands(
-        [BotCommand(command="start", description="Bosh menyuni ochish")],
-        scope=BotCommandScopeDefault()
-    )
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+    except Exception as e:
+        logging.warning(f"Webhook tozalashda ogohlantirish: {e}")
 
-    # 2. Agar ADMIN_ID kiritilgan bo'lsa, faqat adminning o'zida /admin menyusi ko'rinadi
-    if ADMIN_ID != 0:
-        try:
-            await bot.set_my_commands(
-                [
-                    BotCommand(command="start", description="Bosh menyuni ochish"),
-                    BotCommand(command="admin", description="Admin panelini ochish")
-                ],
-                scope=BotCommandScopeChat(chat_id=ADMIN_ID)
-            )
-        except Exception as e:
-            logging.warning(f"Admin buyruqlarini sozlashda xatolik: {e}")
+    # Ko'k menyuda barcha foydalanuvchilar uchun faqat /start buyrug'i bo'ladi
+    try:
+        await bot.set_my_commands(
+            [BotCommand(command="start", description="Bosh menyuni ochish")],
+            scope=BotCommandScopeDefault()
+        )
+    except Exception as e:
+        logging.warning(f"Menyuni sozlashda ogohlantirish: {e}")
 
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    print("Bot muvaffaqiyatli ishga tushdi...")
+    print("--- BOT ISHGA TUSHDI VA BUYRUQLARNI QABUL QILMOQDA ---")
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("Bot to'xtatildi.")
