@@ -40,7 +40,8 @@ BOT_TOKEN = os.getenv("8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw", "").stri
 
 if not BOT_TOKEN:
     raise RuntimeError(
-        "BOT_TOKEN topilmadi! Render/Replit Secrets ichiga BOT_TOKEN qo'ying.")
+        "BOT_TOKEN topilmadi! Render/Replit Secrets ichiga BOT_TOKEN qo'ying."
+    )
 
 # Foydalanuvchi JOIN REQUEST yuborishi kerak bo'lgan kanal.
 # Bot bu requestni AVTOMATIK TASDIQLAMAYDI.
@@ -536,18 +537,8 @@ def get_reply_keyboard() -> ReplyKeyboardMarkup:
 def get_join_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="📢 Kanalga qo'shilish",
-                    url=CHANNEL_LINK,
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="🔄 So'rov yubordim — tekshirish",
-                    callback_data="check_join_request",
-                )
-            ],
+            [InlineKeyboardButton(text="📢 Kanalga qo'shilish", url=CHANNEL_LINK)],
+            [InlineKeyboardButton(text="✅ So'rov yubordim", callback_data="check_join_request")],
         ]
     )
 
@@ -611,40 +602,31 @@ async def process_referral_reward(bot: Bot, user_id: int, user_name: str):
 
 @dp.chat_join_request()
 async def handle_join_request(request: ChatJoinRequest) -> None:
-    """
-    MUHIM:
-    Bu handler JOIN REQUESTni QABUL QILMAYDI.
-    Faqat request yuborgan user ID'sini eslab qoladi.
-
-    Natija:
-    - User kanalga kirish uchun so'rov yuboradi.
-    - So'rov kanalning Requests bo'limida qoladi.
-    - Bot userni avtomatik approve qilmaydi.
-    - User botdan foydalanishi mumkin.
-    """
+    # Requestni QABUL QILMAYMIZ. Faqat userga botdan foydalanish huquqini beramiz.
     user_id = request.from_user.id
     user_name = request.from_user.full_name or "Foydalanuvchi"
-
-    # Faqat kerakli kanal requestlarini qabul qilamiz.
     request_chat_id = getattr(request.chat, "id", None)
 
-    if request_chat_id == CHANNEL_ID:
-        join_request_users.add(user_id)
+    logging.info(
+        f"JOIN REQUEST: user={user_id}, chat={request_chat_id}, required={CHANNEL_ID}"
+    )
 
-        ensure_user(user_id, user_name)
-        await process_referral_reward(request.bot, user_id, user_name)
+    if request_chat_id != CHANNEL_ID:
+        return
 
-        try:
-            await request.bot.send_message(
-                user_id,
-                "✅ <b>So'rovingiz qabul qilindi!</b>\n\n"
-                "Sizning kanalga qo'shilish so'rovingiz <b>yuborildi</b>.\n"
-                "🔒 Bot sizni kanalga avtomatik qo'shmaydi.\n\n"
-                "Endi botdan foydalanishingiz mumkin. 🎉",
-                reply_markup=get_reply_keyboard(),
-            )
-        except Exception:
-            pass
+    join_request_users.add(user_id)
+    ensure_user(user_id, user_name)
+    await process_referral_reward(request.bot, user_id, user_name)
+
+    try:
+        await request.bot.send_message(
+            user_id,
+            "✅ <b>So'rov qabul qilindi!</b>\n\n"
+            "🎉 Endi botdan foydalanishingiz mumkin.",
+            reply_markup=get_reply_keyboard(),
+        )
+    except Exception as e:
+        logging.warning(f"JOIN REQUEST userga xabar yuborilmadi: {e}")
 
 
 # ============================================================
@@ -667,13 +649,8 @@ async def has_bot_access(user_id: int) -> bool:
 
 async def send_join_required(message: Message):
     await message.answer(
-        "🔐 <b>Botdan foydalanish uchun kanalga qo'shilish so'rovini yuboring</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-        "📢 Avval quyidagi kanalga <b>qo'shilish so'rovini yuboring</b>.\n\n"
-        "⚠️ <b>Muhim:</b> Siz avtomatik qo'shib yuborilmaysiz. "
-        "So'rovingiz kanalning <b>Requests / So'rovlar</b> bo'limida qoladi.\n\n"
-        "✅ So'rov yuborganingizdan keyin pastdagi "
-        "<b>«So'rov yubordim — tekshirish»</b> tugmasini bosing.",
+        "📢 <b>Kanalimizga a'zo bo'lish uchun so'rov yuboring.</b>\n\n"
+        "So'rov yuborgach, pastdagi tugmani bosing.",
         reply_markup=get_join_keyboard(),
     )
 
@@ -749,21 +726,14 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
 # ============================================================
 
 @dp.callback_query(F.data == "check_join_request")
-async def check_join_request_callback(
-    callback: CallbackQuery,
-) -> None:
+async def check_join_request_callback(callback: CallbackQuery) -> None:
     user_id = callback.from_user.id
     user_name = callback.from_user.full_name or "Foydalanuvchi"
 
-    # ChatJoinRequest kelgan bo'lsa, handler join_request_users ga qo'shadi.
-    # Bu tugma faqat hozirgi holatni tekshiradi.
     if await has_bot_access(user_id):
+        ensure_user(user_id, user_name)
         await process_referral_reward(callback.bot, user_id, user_name)
-
-        await callback.answer(
-            "✅ So'rovingiz aniqlandi! Botdan foydalanishingiz mumkin.",
-            show_alert=True,
-        )
+        await callback.answer("✅ So'rov topildi!", show_alert=True)
 
         try:
             await callback.message.delete()
@@ -771,17 +741,16 @@ async def check_join_request_callback(
             pass
 
         await callback.message.answer(
-            "🎉 <b>Ruxsat berildi!</b>\n\n"
-            "Endi <b>Bilag'on Quiz</b> botidan foydalanishingiz mumkin.",
+            "🎉 <b>Xush kelibsiz!</b>\n\n"
+            "Botdan foydalanishingiz mumkin.",
             reply_markup=get_reply_keyboard(),
         )
-    else:
-        await callback.answer(
-            "❌ So'rov hali kelmadi.\n\n"
-            "Avval kanalga qo'shilish so'rovini yuboring, "
-            "keyin biroz kutib qayta tekshiring.",
-            show_alert=True,
-        )
+        return
+
+    await callback.answer(
+        "⏳ So'rov topilmadi. Avval kanalga so'rov yuboring.",
+        show_alert=True,
+    )
 
 
 # ============================================================
