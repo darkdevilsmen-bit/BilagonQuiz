@@ -29,7 +29,7 @@ logging.basicConfig(
     stream=sys.stdout
 )
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAHUEUDY9Rj9pNS9h8jh-RACpKH_LGtxgHY")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAGtkSKYvrqGzMY3AtxaejQKULjhWRK7D98")
 
 REQUIRED_CHANNEL = "@Auto_Captions"
 CHANNEL_ID = -1004317372728
