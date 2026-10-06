@@ -36,12 +36,11 @@ logging.basicConfig(
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw").strip()
 
-REQUIRED_CHANNEL = "@Auto_Captions"
-CHANNEL_ID = -1004317372728
+# Yopiq kanal taklif havolasi (Request to join rejimida)
 CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
 
 ADMIN_USERNAME = "manmode_admin2"
-ADMIN_ID = 0  # O'zingizning Telegram raqamli ID'ingizni yozishingiz mumkin
+ADMIN_ID = 0  # O'zingizning Telegram raqamli ID'ingiz
 
 dp = Dispatcher()
 
@@ -203,56 +202,4 @@ CATEGORIES_DB = {
             ("Mirzo Ulug'bek Samarqand rasadxonasida osmon jismlarini kuzatish uchun o'rnatgan asosiy ulkan asbob nima?", ["Sekstant (Kvadrant)", "Asturlob", "Optik teleskop", "Kompas"], 0),
             ("O'rta asr turkiy adabiyotining durdonasi hisoblangan 'Qutadg'u bilig' asari muallifi kim?", ["Yusuf Xos Hojib", "Mahmud Qoshg'ariy", "Ahmad Yugnakiy", "Xo'ja Ahmad Yassaviy"], 0),
             ("Buxoro Xalq Sovet Respublikasi (BXSR) qachon tashkil etilgan?", ["1920-yil oktyabr", "1917-yil noyabr", "1924-yil may", "1918-yil mart"], 0),
-            ("O'zbekiston Respublikasining mustaqilligi qaysi anjumanda e'lon qilingan?", ["Oliy Kengashning navbatdan tashqari sessiyasida", "Vazirlar Mahkamasida", "Umumxalq referendumida", "Markaziy Kengashda"], 0),
-            ("Dunyodagi eng chuqur chuchuk suvli ko'l qaysi?", ["Baykal ko'li", "Viktoriya", "Tanganika", "Yuqori ko'l"], 0),
-            ("Yer sharidagi eng uzun tog' tizmasi qaysi?", ["And tog'lari", "Himolay", "Kordilyera", "Ural"], 0),
-        ],
-    },
-}
-
-
-# ============================================================
-# YORDAMCHI FUNKSIYALAR
-# ============================================================
-
-def get_reply_keyboard() -> ReplyKeyboardMarkup:
-    keyboard = [
-        [KeyboardButton(text="🎯 Viktorinani Boshlash")],
-        [KeyboardButton(text="💳 Balans & Kabinet"), KeyboardButton(text="🎁 Kunlik Bonus")],
-        [KeyboardButton(text="🏆 Top Reyting"), KeyboardButton(text="🔗 Do'stlarni Taklif Qilish")],
-        [KeyboardButton(text="🎖 Katta Konkurs"), KeyboardButton(text="📜 Qoidalar va Shartlar")],
-    ]
-    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
-
-
-def get_join_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Kanalga so'rov yuborish", url=CHANNEL_LINK)],
-            [InlineKeyboardButton(text="✅ So'rov yubordim", callback_data="check_join_request")],
-        ]
-    )
-
-
-def ensure_user(user_id: int, name: str):
-    if user_id not in users_db:
-        users_db[user_id] = {
-            "score": 0,
-            "money": 0,
-            "withdrawn": 0,
-            "question_num": 0,
-            "game_questions": [],
-            "referrals_count": 0,
-            "referred_users": [],
-            "last_bonus": None,
-            "category": "logic",
-            "name": name,
-            "in_game": False,
-            "is_contestant": False,
-            "last_quiz_time": None,
-        }
-    else:
-        users_db[user_id]["name"] = name
-
-
-async def process_referral_reward(bot:
+            ("O
