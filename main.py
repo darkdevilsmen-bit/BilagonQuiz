@@ -36,19 +36,12 @@ logging.basicConfig(
 # Tokenni kodga yozmang.
 # Render/Replit Secrets/Environment Variables ichida:
 # BOT_TOKEN = BotFather bergan yangi token
-BOT_TOKEN = os.getenv("8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw", "").strip()
-
-if not BOT_TOKEN:
-    raise RuntimeError(
-        "BOT_TOKEN topilmadi! Render/Replit Secrets ichiga BOT_TOKEN qo'ying."
-    )
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw").# Ushbu qatorlarni BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw").strip()
 
 # Foydalanuvchi JOIN REQUEST yuborishi kerak bo'lgan kanal.
-# Bot bu requestni AVTOMATIK TASDIQLAMAYDI.
 REQUIRED_CHANNEL = "@Auto_Captions"
 CHANNEL_ID = -1004317372728
 CHANNEL_LINK = "https://t.me/+llFGqeWBsuZlMGYy"
-
 ADMIN_USERNAME = "manmode_admin2"
 ADMIN_ID = 0  # O'zingizning Telegram raqamli ID'ingizni yozishingiz mumkin.
 
