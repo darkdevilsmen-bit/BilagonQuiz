@@ -201,7 +201,6 @@ CATEGORIES_DB = {
                 0,
             ),
             (
-                "        (
             "Idishdagi bakteriyalar har daqiqada 2 barobarga ko'payadi. Agar idish 60 daqiqada to'lsa, yarmi necha daqiqada to'lgan bo'ladi?",
             ["59 daqiqa", "30 daqiqa", "45 daqiqa", "58 daqiqa"],
             0,
