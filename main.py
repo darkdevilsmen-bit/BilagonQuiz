@@ -36,7 +36,8 @@ logging.basicConfig(
 # Tokenni kodga yozmang.
 # Render/Replit Secrets/Environment Variables ichida:
 # BOT_TOKEN = BotFather bergan yangi token
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw").# Ushbu qatorlarni BOT_TOKEN = os.getenv("BOT_TOKEN", "8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw").strip()
+BOT_TOKEN = "8963661833:AAGGL_SPYda_dWR3zlHU5_5XnWCE7nupXRw"
+
 
 # Foydalanuvchi JOIN REQUEST yuborishi kerak bo'lgan kanal.
 REQUIRED_CHANNEL = "@Auto_Captions"
